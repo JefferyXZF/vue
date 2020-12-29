@@ -1,3 +1,4 @@
+// 第三方库定义
 declare module 'he' {
   declare function escape(html: string): string;
   declare function decode(html: string): string;
