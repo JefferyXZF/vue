@@ -13,6 +13,7 @@ export function initProvide (vm: Component) {
   }
 }
 
+// 初始化 inject，并设置其值为响应式
 export function initInjections (vm: Component) {
   const result = resolveInject(vm.$options.inject, vm)
   if (result) {

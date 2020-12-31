@@ -16,6 +16,13 @@ import VNode, { createEmptyVNode } from '../vdom/vnode'
 
 import { isUpdatingChildComponent } from './lifecycle'
 
+/**
+ * @description 初始化 $slots, $scopedSlots, _c, $createElement, $attrs,  $listeners
+ * @author jeffery
+ * @date 2020-12-30
+ * @export
+ * @param {Component} vm
+ */
 export function initRender (vm: Component) {
   vm._vnode = null // the root of the child tree
   vm._staticTrees = null // v-once cached trees
@@ -66,6 +73,7 @@ export function renderMixin (Vue: Class<Component>) {
     return nextTick(fn, this)
   }
 
+  // 调用 render 函数，将 $createElement 参数传入
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
     const { render, _parentVnode } = vm.$options

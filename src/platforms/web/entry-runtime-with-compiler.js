@@ -17,7 +17,7 @@ const idToTemplate = cached(id => {
 // 缓存 $mount 方法
 const mount = Vue.prototype.$mount
 /**
- * 重写 $mount 方法，实现 template 或 el 编译为 render 函数
+ * 重写 $mount 方法，编译 template 或 el 为 render 函数
  * @param {*} el
  * @param {*} hydrating
  */
@@ -71,6 +71,8 @@ Vue.prototype.$mount = function (
       }
 
       // 模板编译成 render 和 staticRenderFns 函数
+      // compileToFunctions 是执行createCompileToFunctionFn方法，传入 compile 函数参数，返回的函数，大量的用到了闭包和函数柯里化
+      // 路径：src/compiler/to-function.js
       const { render, staticRenderFns } = compileToFunctions(template, {
         outputSourceRange: process.env.NODE_ENV !== 'production',
         shouldDecodeNewlines,

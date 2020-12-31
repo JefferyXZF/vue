@@ -25,6 +25,19 @@ const ALWAYS_NORMALIZE = 2
 
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
+/**
+ * @description
+ * @author jeffery
+ * @date 2020-12-31
+ * @export
+ * @param {Component} context
+ * @param {*} tag
+ * @param {*} data
+ * @param {*} children
+ * @param {*} normalizationType
+ * @param {boolean} alwaysNormalize
+ * @returns {(VNode | Array<VNode>)}
+ */
 export function createElement (
   context: Component,
   tag: any,
@@ -33,6 +46,7 @@ export function createElement (
   normalizationType: any,
   alwaysNormalize: boolean
 ): VNode | Array<VNode> {
+  // 参数重载
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
@@ -44,6 +58,18 @@ export function createElement (
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+/**
+ * @description 创建元素
+ * @author jeffery
+ * @date 2020-12-30
+ * @export
+ * @param {Component} context VNode 的上下文环境
+ * @param {(string | Class<Component> | Function | Object)} [tag]
+ * @param {VNodeData} [data]  表示 VNode 的数据，它是一个 VNodeData 类型，可以在 flow/vnode.js 中找到它的定义
+ * @param {*} [children] 表示当前 VNode 的子节点
+ * @param {number} [normalizationType]  表示子节点规范的类型，类型不同规范的方法也就不一样，它主要是参考 render 函数是编译生成的还是用户手写的。
+ * @returns {(VNode | Array<VNode>)}
+ */
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -87,9 +113,9 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
-  if (normalizationType === ALWAYS_NORMALIZE) {
+  if (normalizationType === ALWAYS_NORMALIZE) { // 多维数组降维，递归处理
     children = normalizeChildren(children)
-  } else if (normalizationType === SIMPLE_NORMALIZE) {
+  } else if (normalizationType === SIMPLE_NORMALIZE) { // 二维数组降维
     children = simpleNormalizeChildren(children)
   }
   let vnode, ns

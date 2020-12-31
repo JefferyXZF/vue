@@ -38,6 +38,7 @@ export function initLifecycle (vm: Component) {
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
     }
+    // 将当前vm实例添加到父组件下
     parent.$children.push(vm)
   }
 
@@ -56,6 +57,7 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
+  // 把 VNode 渲染成真实的 DOM
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
@@ -138,6 +140,17 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+/**
+ * @description 实例化一个渲染 Watcher，在它的回调函数中会调用 updateComponent 方法
+ * updateComponent 调用 vm._render 方法先生成虚拟 Node，最终调用 vm._update 更新 DOM。
+ * @author jeffery
+ * @date 2020-12-30
+ * @export
+ * @param {Component} vm
+ * @param {?Element} el
+ * @param {boolean} [hydrating]
+ * @returns {Component}
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,

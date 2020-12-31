@@ -66,7 +66,14 @@ function createKeyToOldIdx (children, beginIdx, endIdx) {
   }
   return map
 }
-
+/**
+ * @description 内部定义了一系列的辅助方法，最终返回了一个 patch 方法
+ * @author jeffery
+ * @date 2020-12-30
+ * @export
+ * @param {*} backend
+ * @returns
+ */
 export function createPatchFunction (backend) {
   let i, j
   const cbs = {}
@@ -121,7 +128,18 @@ export function createPatchFunction (backend) {
   }
 
   let creatingElmInVPre = 0
-
+  /**
+   * @description 通过虚拟节点创建真实的 DOM 并插入到它的父节点中
+   * @author jeffery
+   * @date 2020-12-31
+   * @param {*} vnode
+   * @param {*} insertedVnodeQueue
+   * @param {*} parentElm
+   * @param {*} refElm
+   * @param {*} nested
+   * @param {*} ownerArray
+   * @param {*} index
+   */
   function createElm (
     vnode,
     insertedVnodeQueue,
@@ -188,6 +206,7 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
+        // 创建子元素
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
@@ -269,6 +288,14 @@ export function createPatchFunction (backend) {
     insert(parentElm, vnode.elm, refElm)
   }
 
+  /**
+   * @description 把 DOM 插入到父节点中，因为是递归调用，子元素会优先调用 insert，所以整个 vnode 树节点的插入顺序是先子后父
+   * @author jeffery
+   * @date 2020-12-31
+   * @param {*} parent
+   * @param {*} elm
+   * @param {*} ref
+   */
   function insert (parent, elm, ref) {
     if (isDef(parent)) {
       if (isDef(ref)) {
@@ -280,7 +307,15 @@ export function createPatchFunction (backend) {
       }
     }
   }
-
+  /**
+   * @description 遍历vnode子虚拟节点，递归调用 createElm，这是一种常用的深度优先的遍历算法，
+   * 这里要注意的一点是在遍历过程中会把 vnode.elm 作为父容器的 DOM 节点占位符传入。
+   * @author jeffery
+   * @date 2020-12-31
+   * @param {*} vnode
+   * @param {*} children
+   * @param {*} insertedVnodeQueue
+   */
   function createChildren (vnode, children, insertedVnodeQueue) {
     if (Array.isArray(children)) {
       if (process.env.NODE_ENV !== 'production') {
@@ -300,7 +335,13 @@ export function createPatchFunction (backend) {
     }
     return isDef(vnode.tag)
   }
-
+  /**
+   * @description 执行所有的 create 的钩子并把 vnode push 到 insertedVnodeQueue 中
+   * @author jeffery
+   * @date 2020-12-31
+   * @param {*} vnode
+   * @param {*} insertedVnodeQueue
+   */
   function invokeCreateHooks (vnode, insertedVnodeQueue) {
     for (let i = 0; i < cbs.create.length; ++i) {
       cbs.create[i](emptyNode, vnode)
@@ -697,6 +738,10 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // oldVnode 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象；
+  // vnode 表示执行 _render 后返回的 VNode 的节点；
+  // hydrating 表示是否是服务端渲染；
+  // removeOnly 是给 transition-group 用的
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)

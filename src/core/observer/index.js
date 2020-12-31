@@ -142,6 +142,8 @@ export function defineReactive (
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
+
+  // 如果设置 configurable 为 false，则不设置响应式
   if (property && property.configurable === false) {
     return
   }
@@ -152,7 +154,7 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-
+  // 递归处理，嵌套对象深度响应式
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,

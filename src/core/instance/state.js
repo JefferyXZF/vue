@@ -48,19 +48,27 @@ export function proxy (target: Object, sourceKey: string, key: string) {
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
-  if (opts.props) initProps(vm, opts.props)
-  if (opts.methods) initMethods(vm, opts.methods)
+  if (opts.props) initProps(vm, opts.props) //  设置 props 为响应式，并代理
+  if (opts.methods) initMethods(vm, opts.methods) // 将 methods 方法挂载在vm上
+  // 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
   if (opts.data) {
     initData(vm)
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
-  if (opts.computed) initComputed(vm, opts.computed)
+  if (opts.computed) initComputed(vm, opts.computed) // 初始化 computed 的 get 和 set 方法
+  // 初始化 watch
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
 }
-
+/**
+ * @description props 为响应式，并代理
+ * @author jeffery
+ * @date 2020-12-30
+ * @param {Component} vm
+ * @param {Object} propsOptions
+ */
 function initProps (vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
@@ -109,6 +117,12 @@ function initProps (vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+/**
+ * @description 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
+ * @author jeffery
+ * @date 2020-12-30
+ * @param {Component} vm
+ */
 function initData (vm: Component) {
   let data = vm.$options.data
   data = vm._data = typeof data === 'function'
@@ -166,6 +180,14 @@ export function getData (data: Function, vm: Component): any {
 
 const computedWatcherOptions = { lazy: true }
 
+/**
+ * @description 实例化 Watcher, 通过 Object.defineProperty ，get
+ * set 方法中调用 watch 实例，实现响应式
+ * @author jeffery
+ * @date 2020-12-30
+ * @param {Component} vm
+ * @param {Object} computed
+ */
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
   const watchers = vm._computedWatchers = Object.create(null)
@@ -207,6 +229,15 @@ function initComputed (vm: Component, computed: Object) {
   }
 }
 
+/**
+ * @description 定义 computed 的 get 和 set 方法
+ * @author jeffery
+ * @date 2020-12-30
+ * @export
+ * @param {*} target
+ * @param {string} key
+ * @param {(Object | Function)} userDef
+ */
 export function defineComputed (
   target: any,
   key: string,
@@ -287,6 +318,13 @@ function initMethods (vm: Component, methods: Object) {
   }
 }
 
+/**
+ * @description 遍历 watch，判断是否是数组，为每一个watch创建createWatcher
+ * @author jeffery
+ * @date 2020-12-30
+ * @param {Component} vm
+ * @param {Object} watch
+ */
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
@@ -300,6 +338,16 @@ function initWatch (vm: Component, watch: Object) {
   }
 }
 
+/**
+ * @description 调用 $watch 方法
+ * @author jeffery
+ * @date 2020-12-30
+ * @param {Component} vm
+ * @param {(string | Function)} expOrFn
+ * @param {*} handler
+ * @param {Object} [options]
+ * @returns
+ */
 function createWatcher (
   vm: Component,
   expOrFn: string | Function,
