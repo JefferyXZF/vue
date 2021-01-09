@@ -131,7 +131,7 @@ export default class Watcher {
       this.newDepIds.add(id)
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
-        dep.addSub(this)
+        dep.addSub(this) // dep 中添加 watch 实例
       }
     }
   }

@@ -743,14 +743,16 @@ export function createPatchFunction (backend) {
   // hydrating 表示是否是服务端渲染；
   // removeOnly 是给 transition-group 用的
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
+    // 没有新节点
     if (isUndef(vnode)) {
+      // 有旧节点，删除操作
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
     }
 
     let isInitialPatch = false
     const insertedVnodeQueue = []
-
+    // 没有旧节点，有新节点，创建
     if (isUndef(oldVnode)) {
       // empty mount (likely as component), create new root element
       isInitialPatch = true

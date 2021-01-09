@@ -5,7 +5,7 @@ import { toArray } from '../util/index'
 export function initUse (Vue: GlobalAPI) {
   Vue.use = function (plugin: Function | Object) {
     const installedPlugins = (this._installedPlugins || (this._installedPlugins = []))
-    // 插件只安装一次
+    // 单例模式：插件缓存，只调用一次
     if (installedPlugins.indexOf(plugin) > -1) {
       return this
     }

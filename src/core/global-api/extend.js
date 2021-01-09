@@ -21,6 +21,7 @@ export function initExtend (Vue: GlobalAPI) {
     const Super = this
     const SuperId = Super.cid
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
+    // 缓存
     if (cachedCtors[SuperId]) {
       return cachedCtors[SuperId]
     }
@@ -33,9 +34,11 @@ export function initExtend (Vue: GlobalAPI) {
     const Sub = function VueComponent (options) {
       this._init(options)
     }
+    // 原型继承
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
+    // 子类和父类构造器的配置选项进行合并
     Sub.options = mergeOptions(
       Super.options,
       extendOptions

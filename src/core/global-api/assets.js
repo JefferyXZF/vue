@@ -19,6 +19,7 @@ export function initAssetRegisters (Vue: GlobalAPI) {
         if (process.env.NODE_ENV !== 'production' && type === 'component') {
           validateComponentName(id)
         }
+        // 注册组件第二个参数是对象，调用 Vue.extend 方法生成Vue字类构造器
         if (type === 'component' && isPlainObject(definition)) {
           definition.name = definition.name || id
           definition = this.options._base.extend(definition)

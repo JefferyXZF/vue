@@ -63,7 +63,7 @@ export function initState (vm: Component) {
   }
 }
 /**
- * @description props 为响应式，并代理
+ * @description 实现流程：1、检验props的key 2、定义响应式对象  3、将props的key代理到vm
  * @author jeffery
  * @date 2020-12-30
  * @param {Component} vm
@@ -118,7 +118,8 @@ function initProps (vm: Component, propsOptions: Object) {
 }
 
 /**
- * @description 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
+ * @description 实现流程 1、得到data对象 2、检验data的key是否和props、methods有重合
+ * 3、代理data到vm上 4、定义响应式对象 observe
  * @author jeffery
  * @date 2020-12-30
  * @param {Component} vm

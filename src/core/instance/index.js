@@ -20,10 +20,11 @@ function Vue (options) {
   this._init(options)
 }
 
-initMixin(Vue) // 混入 _init 方法
-stateMixin(Vue) // 混入 VUE 实例属性 $data, $props, $set, $delete, $watch
-eventsMixin(Vue) // 混入 $on, $once, $off, $emit 方法
-lifecycleMixin(Vue) // 混入 _update, $forceUpdate, $destroy 方法
-renderMixin(Vue) // 安装运行时辅助工具，混入 $nextTick, _render 方法
+// 往 Vue 原型上添加属性和方法
+initMixin(Vue) // 原型上添加 _init 方法
+stateMixin(Vue) // 原型上添加 VUE 实例属性 $data, $props, $set, $delete, $watch
+eventsMixin(Vue) // 原型上添加 $on, $once, $off, $emit 方法
+lifecycleMixin(Vue) // 原型上添加 _update, $forceUpdate, $destroy 方法
+renderMixin(Vue) // 安装运行时辅助工具，原型上添加 $nextTick, _render 方法
 
 export default Vue

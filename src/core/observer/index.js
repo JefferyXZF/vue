@@ -29,6 +29,7 @@ export function toggleObserving (value: boolean) {
 }
 
 /**
+ * 观察者模式，给对象的属性添加 getter 和 setter，用于依赖收集和派发更新
  * Observer class that is attached to each observed
  * object. Once attached, the observer converts the target
  * object's property keys into getter/setters that
@@ -41,7 +42,7 @@ export class Observer {
 
   constructor (value: any) {
     this.value = value
-    this.dep = new Dep()
+    this.dep = new Dep() // 依赖收集
     this.vmCount = 0
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
@@ -103,6 +104,7 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
 }
 
 /**
+ * 监测数据的变化，为某个值创建观察者对象
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
@@ -130,6 +132,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 }
 
 /**
+ * 定义响应式对象
  * Define a reactive property on an Object.
  */
 export function defineReactive (
@@ -139,11 +142,11 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
-  const dep = new Dep()
+  const dep = new Dep() // 依赖收集对象
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
 
-  // 如果设置 configurable 为 false，则不设置响应式
+  // 如果设置 configurable 为 false，则不设置响应式，可以作为性能优化的方式
   if (property && property.configurable === false) {
     return
   }
@@ -162,10 +165,10 @@ export function defineReactive (
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        dep.depend() // 依赖收集
         if (childOb) {
-          childOb.dep.depend()
-          if (Array.isArray(value)) {
+          childOb.dep.depend() // 嵌套对象/数组类型，添加依赖收集
+          if (Array.isArray(value)) { // 数组类型，对每一项做依赖收集
             dependArray(value)
           }
         }
@@ -271,7 +274,7 @@ function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
     e = value[i]
     e && e.__ob__ && e.__ob__.dep.depend()
-    if (Array.isArray(e)) {
+    if (Array.isArray(e)) { // 递归处理数组依赖收集
       dependArray(e)
     }
   }

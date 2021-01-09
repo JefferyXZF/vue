@@ -148,6 +148,7 @@ export function hasOwn (obj: Object | Array<*>, key: string): boolean {
 }
 
 /**
+ * 使用闭包，实现缓存
  * Create a cached version of a pure function.
  */
 export function cached<F: Function> (fn: F): F {

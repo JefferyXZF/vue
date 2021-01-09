@@ -64,6 +64,7 @@ const componentVNodeHooks = {
     )
   },
 
+  // 挂载完成
   insert (vnode: MountedComponentVNode) {
     const { context, componentInstance } = vnode
     if (!componentInstance._isMounted) {
@@ -182,7 +183,7 @@ export function createComponent (
     }
   }
 
-  // install component management hooks onto the placeholder node
+  // 安装组件钩子函数 install component management hooks onto the placeholder node
   installComponentHooks(data)
 
   // return a placeholder vnode

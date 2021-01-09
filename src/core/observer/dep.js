@@ -33,7 +33,7 @@ export default class Dep {
       Dep.target.addDep(this)
     }
   }
-
+  // 派发更新
   notify () {
     // stabilize the subscriber list first
     const subs = this.subs.slice()

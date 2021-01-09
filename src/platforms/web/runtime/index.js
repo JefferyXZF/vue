@@ -21,16 +21,18 @@ import platformComponents from './components/index'
 
 // install platform specific utils
 Vue.config.mustUseProp = mustUseProp
-Vue.config.isReservedTag = isReservedTag
+Vue.config.isReservedTag = isReservedTag // html的保留标签
 Vue.config.isReservedAttr = isReservedAttr
 Vue.config.getTagNamespace = getTagNamespace
 Vue.config.isUnknownElement = isUnknownElement
 
 // install platform runtime directives & components
+// 注册全局指令 v-show, v-model
 extend(Vue.options.directives, platformDirectives)
+// 注册全局组件  transition、transition-group
 extend(Vue.options.components, platformComponents)
 
-// install platform patch function
+// 安装平台 patch 方法 | install platform patch function 
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
