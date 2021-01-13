@@ -19,6 +19,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
       }
 
       if (options) {
+        // 这里会将用户传递的配置和系统自带编译配置进行合并
         if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
           // $flow-disable-line
           const leadingSpaceLength = template.match(/^\s*/)[0].length
@@ -58,6 +59,7 @@ export function createCompilerCreator (baseCompile: Function): Function {
 
       finalOptions.warn = warn
 
+      // 编译
       const compiled = baseCompile(template.trim(), finalOptions)
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)

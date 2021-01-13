@@ -91,6 +91,18 @@ export function FunctionalRenderContext (
 
 installRenderHelpers(FunctionalRenderContext.prototype)
 
+/**
+ * @description
+ * @author jeffery
+ * @date 2021-01-10
+ * @export
+ * @param {Class<Component>} Ctor // 函数式组件构造器
+ * @param {?Object} propsData // 传入组件的 props
+ * @param {VNodeData} data // 占位符组件传入的attr属性
+ * @param {Component} contextVm // vue实例
+ * @param {?Array<VNode>} children // 子节点
+ * @returns {(VNode | Array<VNode> | void)}
+ */
 export function createFunctionalComponent (
   Ctor: Class<Component>,
   propsData: ?Object,
@@ -106,7 +118,9 @@ export function createFunctionalComponent (
       props[key] = validateProp(key, propOptions, propsData || emptyObject)
     }
   } else {
+    // 合并attrs
     if (isDef(data.attrs)) mergeProps(props, data.attrs)
+    // 合并props
     if (isDef(data.props)) mergeProps(props, data.props)
   }
 
@@ -118,6 +132,7 @@ export function createFunctionalComponent (
     Ctor
   )
 
+  // 调用函数式组件中自定的render函数
   const vnode = options.render.call(null, renderContext._c, renderContext)
 
   if (vnode instanceof VNode) {

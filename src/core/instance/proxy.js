@@ -6,6 +6,7 @@ import { warn, makeMap, isNative } from '../util/index'
 let initProxy
 
 if (process.env.NODE_ENV !== 'production') {
+  // 模板中允许出现的非vue实例定义的变量
   const allowedGlobals = makeMap(
     'Infinity,undefined,NaN,isFinite,isNaN,' +
     'parseFloat,parseInt,decodeURI,decodeURIComponent,encodeURI,encodeURIComponent,' +
@@ -55,8 +56,12 @@ if (process.env.NODE_ENV !== 'production') {
   const hasHandler = {
     has (target, key) {
       const has = key in target
+      // isAllowed用来判断模板上出现的变量是否合法。
       const isAllowed = allowedGlobals(key) ||
         (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data))
+      // _和$开头的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
+      // 1. warnReservedPrefix: 警告不能以$ _开头的变量
+      // 2. warnNonPresent: 警告模板出现的变量在vue实例中未定义
       if (!has && !isAllowed) {
         if (key in target.$data) warnReservedPrefix(target, key)
         else warnNonPresent(target, key)
@@ -82,6 +87,7 @@ if (process.env.NODE_ENV !== 'production') {
       const handlers = options.render && options.render._withStripped
         ? getHandler
         : hasHandler
+      // 代理vm实例到vm属性_renderProxy
       vm._renderProxy = new Proxy(vm, handlers)
     } else {
       vm._renderProxy = vm

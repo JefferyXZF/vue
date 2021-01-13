@@ -88,6 +88,7 @@ export function resolveAsyncComponent (
       }
     }
 
+    // once函数保证了这个调用函数只在系统中调用一次
     const resolve = once((res: Object | Class<Component>) => {
       // cache resolved
       factory.resolved = ensureCtor(res, baseCtor)
@@ -111,6 +112,7 @@ export function resolveAsyncComponent (
       }
     })
 
+    // 创建子组件时会先执行工厂函数，并将resolve和reject传入
     const res = factory(resolve, reject)
 
     if (isObject(res)) {

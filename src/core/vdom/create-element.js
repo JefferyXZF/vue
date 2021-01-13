@@ -44,18 +44,19 @@ export function createElement (
   data: any,
   children: any,
   normalizationType: any,
-  alwaysNormalize: boolean
+  alwaysNormalize: boolean // 区分内部编译生成的render还是手写render
 ): VNode | Array<VNode> {
-  // 参数重载
+  // 参数重载，对传入参数做处理，如果没有data，则将第三个参数作为第四个参数使用，往上类推
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
     data = undefined
   }
+  // 根据是alwaysNormalize 区分是内部编译使用的，还是用户手写render使用的
   if (isTrue(alwaysNormalize)) {
     normalizationType = ALWAYS_NORMALIZE
   }
-  return _createElement(context, tag, data, children, normalizationType)
+  return _createElement(context, tag, data, children, normalizationType) // 真正生成Vnode的方法
 }
 
 /**
@@ -77,6 +78,7 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
+  // 1. 数据对象不能是定义在Vue data属性中的响应式数据。
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
@@ -94,6 +96,7 @@ export function _createElement (
     return createEmptyVNode()
   }
   // warn against non-primitive key
+  // 2. key值只能为string，number这些原始数据类型
   if (process.env.NODE_ENV !== 'production' &&
     isDef(data) && isDef(data.key) && !isPrimitive(data.key)
   ) {
@@ -114,8 +117,10 @@ export function _createElement (
     children.length = 0
   }
   if (normalizationType === ALWAYS_NORMALIZE) { // 多维数组降维，递归处理
+    // 用户定义render函数
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) { // 二维数组降维
+    // 模板编译生成的的render函数
     children = simpleNormalizeChildren(children)
   }
   let vnode, ns

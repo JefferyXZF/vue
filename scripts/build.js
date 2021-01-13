@@ -4,12 +4,15 @@ const zlib = require('zlib')
 const rollup = require('rollup')
 const terser = require('terser')
 
+// 判断是否存在 dist 目录，不存在就创建 dist
 if (!fs.existsSync('dist')) {
   fs.mkdirSync('dist')
 }
 
+// 读取构建需要的配置
 let builds = require('./config').getAllBuilds()
 
+// 根据构建命令传入的参数过滤配置，过滤后的配置构建出不同 vue 版本文件
 // filter builds via command line arg
 if (process.argv[2]) {
   const filters = process.argv[2].split(',')

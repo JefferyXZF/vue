@@ -41,6 +41,7 @@ Vue.prototype.$mount = function (
   if (!options.render) {
     let template = options.template
     if (template) {
+      // 针对字符串模板和选择符匹配模板
       if (typeof template === 'string') {
         if (template.charAt(0) === '#') {
           template = idToTemplate(template)
@@ -61,6 +62,7 @@ Vue.prototype.$mount = function (
         return this
       }
     } else if (el) {
+       // 如果没有传入template模板，则默认以el元素所属的根节点作为基础模板
       template = getOuterHTML(el)
     }
     if (template) {
@@ -71,14 +73,14 @@ Vue.prototype.$mount = function (
       }
 
       // 模板编译成 render 和 staticRenderFns 函数
-      // compileToFunctions 是执行createCompileToFunctionFn方法，传入 compile 函数参数，返回的函数，大量的用到了闭包和函数柯里化
       // 路径：src/compiler/to-function.js
+      // 使用了闭包和函数柯里化、缓存
       const { render, staticRenderFns } = compileToFunctions(template, {
         outputSourceRange: process.env.NODE_ENV !== 'production',
         shouldDecodeNewlines,
         shouldDecodeNewlinesForHref,
-        delimiters: options.delimiters,
-        comments: options.comments
+        delimiters: options.delimiters, // 改变纯文本插入分隔符，当不传递值时，Vue默认的分隔符为 {{}}
+        comments: options.comments //  当设为 true 时，将会保留且渲染模板中的 HTML注释。默认行为是舍弃它们
       }, this)
       options.render = render
       options.staticRenderFns = staticRenderFns

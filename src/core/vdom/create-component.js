@@ -100,11 +100,11 @@ const componentVNodeHooks = {
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
 export function createComponent (
-  Ctor: Class<Component> | Function | Object | void,
+  Ctor: Class<Component> | Function | Object | void, // 子类构造器
   data: ?VNodeData,
   context: Component,
   children: ?Array<VNode>,
-  tag?: string
+  tag?: string // 子组件占位符
 ): VNode | Array<VNode> | void {
   if (isUndef(Ctor)) {
     return
@@ -113,6 +113,7 @@ export function createComponent (
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 针对局部组件注册场景
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
@@ -127,6 +128,7 @@ export function createComponent (
   }
 
   // async component
+  // 异步组件分支
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
@@ -135,6 +137,7 @@ export function createComponent (
       // return a placeholder node for async component, which is rendered
       // as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
+      // 创建注释节点
       return createAsyncPlaceholder(
         asyncFactory,
         data,
@@ -149,6 +152,7 @@ export function createComponent (
 
   // resolve constructor options in case global mixins are applied after
   // component constructor creation
+  // 构造器配置合并
   resolveConstructorOptions(Ctor)
 
   // transform component v-model data into props & events
@@ -160,6 +164,7 @@ export function createComponent (
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
+  // 函数式组件
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
@@ -188,6 +193,7 @@ export function createComponent (
 
   // return a placeholder vnode
   const name = Ctor.options.name || tag
+  // 创建子组件vnode，名称以 vue-component- 开头
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
     data, undefined, undefined, undefined, context,
@@ -226,12 +232,14 @@ export function createComponentInstanceForVnode (
   return new vnode.componentOptions.Ctor(options)
 }
 
+// 将 componentVNodeHooks 钩子函数合并到组件data.hook中 
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
     const key = hooksToMerge[i]
     const existing = hooks[key]
     const toMerge = componentVNodeHooks[key]
+    // 如果钩子函数存在，则执行mergeHook$1方法合并
     if (existing !== toMerge && !(existing && existing._merged)) {
       hooks[key] = existing ? mergeHook(toMerge, existing) : toMerge
     }

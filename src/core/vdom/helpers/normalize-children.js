@@ -15,8 +15,10 @@ import { isFalse, isTrue, isDef, isUndef, isPrimitive } from 'shared/util'
 // normalization is needed - if any child is an Array, we flatten the whole
 // thing with Array.prototype.concat. It is guaranteed to be only 1-level deep
 // because functional components already normalize their own children.
+// 处理编译生成的render 函数
 export function simpleNormalizeChildren (children: any) {
   for (let i = 0; i < children.length; i++) {
+    // 子节点为数组时，进行开平操作，压成一维数组。
     if (Array.isArray(children[i])) {
       return Array.prototype.concat.apply([], children)
     }
@@ -36,7 +38,9 @@ export function simpleNormalizeChildren (children: any) {
  * @param {*} children
  * @returns {?Array<VNode>}
  */
+// 处理用户定义的render函数
 export function normalizeChildren (children: any): ?Array<VNode> {
+  // 递归调用，直到子节点是基础类型，则调用创建文本节点Vnode
   return isPrimitive(children)
     ? [createTextVNode(children)]
     : Array.isArray(children)

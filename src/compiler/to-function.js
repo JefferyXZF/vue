@@ -52,11 +52,13 @@ export function createCompileToFunctionFn (compile: Function): Function {
     const key = options.delimiters
       ? String(options.delimiters) + template
       : template
+      // 缓存的作用：避免重复编译同个模板造成性能的浪费
     if (cache[key]) {
       return cache[key]
     }
 
     // compile
+    // 执行编译方法
     const compiled = compile(template, options)
 
     // check compilation errors/tips
@@ -91,6 +93,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     const res = {}
     const fnGenErrors = []
     // render 函数
+    // 编译出的函数体字符串作为参数传递给createFunction,返回最终的render函数
     res.render = createFunction(compiled.render, fnGenErrors)
     res.staticRenderFns = compiled.staticRenderFns.map(code => {
       return createFunction(code, fnGenErrors)

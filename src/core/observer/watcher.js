@@ -50,16 +50,16 @@ export default class Watcher {
     isRenderWatcher?: boolean
   ) {
     this.vm = vm
-    if (isRenderWatcher) {
+    if (isRenderWatcher) { // 渲染 watcher 标识
       vm._watcher = this
     }
     vm._watchers.push(this)
     // options
     if (options) {
-      this.deep = !!options.deep
-      this.user = !!options.user
-      this.lazy = !!options.lazy
-      this.sync = !!options.sync
+      this.deep = !!options.deep // 深度监听
+      this.user = !!options.user // 用户定义 watcher
+      this.lazy = !!options.lazy // computed watcher
+      this.sync = !!options.sync // 同步 watcher
       this.before = options.before
     } else {
       this.deep = this.user = this.lazy = this.sync = false

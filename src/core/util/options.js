@@ -486,6 +486,7 @@ export function resolveAsset (
   }
   const assets = options[type]
   // check local registration variations first
+  // 支持大小写，驼峰的命名规范
   if (hasOwn(assets, id)) return assets[id]
   const camelizedId = camelize(id)
   if (hasOwn(assets, camelizedId)) return assets[camelizedId]
