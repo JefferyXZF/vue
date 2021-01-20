@@ -25,7 +25,7 @@
   "scripts": {
     "dev": "rollup -w -c scripts/config.js --source-map --environment TARGET:web-full-dev"
   },
-  "gitHooks": { // git 自定义挂钩目录
+  "gitHooks": { // githooks是一个工具，轻松地构建git的自定义钩子
     "pre-commit": "lint-staged",
     "commit-msg": "node scripts/verify-commit-msg.js"
   },

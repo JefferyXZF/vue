@@ -1,8 +1,10 @@
+// build 打包输出文件，使用 rollup JS API
+
 const fs = require('fs')
 const path = require('path')
 const zlib = require('zlib')
 const rollup = require('rollup')
-const terser = require('terser')
+const terser = require('terser') // 代码压缩
 
 // 判断是否存在 dist 目录，不存在就创建 dist
 if (!fs.existsSync('dist')) {
@@ -33,6 +35,7 @@ function build (builds) {
   const total = builds.length
   const next = () => {
     buildEntry(builds[built]).then(() => {
+      // 递归处理构建输出文件
       built++
       if (built < total) {
         next()
@@ -46,11 +49,11 @@ function build (builds) {
 function buildEntry (config) {
   const output = config.output
   const { file, banner } = output
-  const isProd = /(min|prod)\.js$/.test(file)
+  const isProd = /(min|prod)\.js$/.test(file) // 生产版本
   return rollup.rollup(config)
     .then(bundle => bundle.generate(output))
     .then(({ output: [{ code }] }) => {
-      if (isProd) {
+      if (isProd) { // 生产版本开启代码压缩
         const minified = (banner ? banner + '\n' : '') + terser.minify(code, {
           toplevel: true,
           output: {
@@ -76,7 +79,7 @@ function write (dest, code, zip) {
 
     fs.writeFile(dest, code, err => {
       if (err) return reject(err)
-      if (zip) {
+      if (zip) { // 压缩代码
         zlib.gzip(code, (err, zipped) => {
           if (err) return reject(err)
           report(' (gzipped: ' + getSize(zipped) + ')')

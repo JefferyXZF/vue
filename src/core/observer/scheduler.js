@@ -68,6 +68,17 @@ if (inBrowser && !isIE) {
 /**
  * Flush both queues and run the watchers.
  */
+/**
+ * @description
+ * flushSchedulerQueue阶段，重要的过程可以总结为四点：
+ * 1、对queue中的watcher进行排序。
+ * 2、遍历watcher,如果当前watcher有before配置，则执行before方法，对应前面的渲染watcher:在渲染watcher实例化时，
+ * 我们传递了before函数，即在下个tick更新视图前，会调用beforeUpdate生命周期钩子。
+ * 3、执行watcher.run进行修改的操作。
+ * 4、重置恢复状态，这个阶段会将一些流程控制的状态变量恢复为初始值，并清空记录watcher的队列。
+ * @author jeffery*
+ * @date 2021-01-20
+ */
 function flushSchedulerQueue () {
   currentFlushTimestamp = getNow()
   flushing = true
@@ -81,12 +92,18 @@ function flushSchedulerQueue () {
   //    user watchers are created before the render watcher)
   // 3. If a component is destroyed during a parent component's watcher run,
   //    its watchers can be skipped.
+  // 对queue的watcher进行排序 目的主要有三个
+  // 1、组件创建是先父后子，所以组件的更新也是先父后子，因此需要保证父的渲染watcher优先于子的渲染watcher更新。
+  // 2、用户自定义的watcher,称为user watcher。 user watcher和render watcher执行也有先后，由于user watchers比render watcher要先创建，所以user watcher要优先执行。
+  // 3、如果一个组件在父组件的 watcher 执行阶段被销毁，那么它对应的 watcher 执行都可以被跳过。
   queue.sort((a, b) => a.id - b.id)
 
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
+  // 循环执行queue.length，为了确保由于渲染时添加新的依赖导致queue的长度不断改变。
   for (index = 0; index < queue.length; index++) {
     watcher = queue[index]
+    // 如果watcher定义了before的配置，则优先执行before方法
     if (watcher.before) {
       watcher.before()
     }
@@ -114,9 +131,11 @@ function flushSchedulerQueue () {
   const activatedQueue = activatedChildren.slice()
   const updatedQueue = queue.slice()
 
+  // 重置恢复状态，清空队列
   resetSchedulerState()
 
   // call component updated and activated hooks
+  // 视图改变后，调用其他钩子
   callActivatedHooks(activatedQueue)
   callUpdatedHooks(updatedQueue)
 

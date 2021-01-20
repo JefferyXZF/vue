@@ -9,6 +9,9 @@ import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
 
+/**
+ * 使用缓存，获取元素 DOM 的 innerHTML
+ */
 const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
@@ -17,7 +20,7 @@ const idToTemplate = cached(id => {
 // 缓存 $mount 方法
 const mount = Vue.prototype.$mount
 /**
- * 重写 $mount 方法，编译 template 或 el 为 render 函数
+ * 重写 $mount 方法，使用 compileToFunctions 编译 template 或 el 为 render 函数
  * @param {*} el
  * @param {*} hydrating
  */

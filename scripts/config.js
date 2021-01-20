@@ -1,3 +1,5 @@
+// rollup 打包构建配置文件
+
 const path = require('path')
 const buble = require('rollup-plugin-buble')
 const alias = require('rollup-plugin-alias')
@@ -9,6 +11,7 @@ const version = process.env.VERSION || require('../package.json').version
 const weexVersion = process.env.WEEX_VERSION || require('../packages/weex-vue-framework/package.json').version
 const featureFlags = require('./feature-flags')
 
+// 打包注释
 const banner =
   '/*!\n' +
   ` * Vue.js v${version}\n` +
@@ -28,12 +31,17 @@ const weexFactoryPlugin = {
 const aliases = require('./alias')
 const resolve = p => {
   const base = p.split('/')[0]
-  if (aliases[base]) {
+  if (aliases[base]) { // 拼接路径
     return path.resolve(aliases[base], p.slice(base.length + 1))
   } else {
     return path.resolve(__dirname, '../', p)
   }
 }
+
+// 打包代码规范 commonjs, esm, umd
+// 打包版本 ： 生产版本（压缩代码）、开发版本
+// 打包平台：weex、web
+// 编译版本：runtime only(不带编译器)、runtime + compiler (带编译器，打包入口 entry-runtime-with-compiler.js)
 
 const builds = {
   // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
@@ -216,17 +224,17 @@ const builds = {
 function genConfig (name) {
   const opts = builds[name]
   const config = {
-    input: opts.entry,
-    external: opts.external,
-    plugins: [
+    input: opts.entry, // 打包入口
+    external: opts.external, // 第三方包
+    plugins: [ // 插件
       flow(),
       alias(Object.assign({}, aliases, opts.alias))
     ].concat(opts.plugins || []),
-    output: {
+    output: { // 打包输出 文件名、规范格式、banner 注释、包名
       file: opts.dest,
       format: opts.format,
       banner: opts.banner,
-      name: opts.moduleName || 'Vue'
+      name: opts.moduleName || 'Vue' // 引用此库的名称 import Vue from 'vue'
     },
     onwarn: (msg, warn) => {
       if (!/Circular/.test(msg)) {

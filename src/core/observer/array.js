@@ -23,7 +23,9 @@ const methodsToPatch = [
  */
 methodsToPatch.forEach(function (method) {
   // cache original method
+  // 缓冲原始数组的方法
   const original = arrayProto[method]
+  // 利用Object.defineProperty对方法的执行进行改写
   def(arrayMethods, method, function mutator (...args) {
     const result = original.apply(this, args)
     const ob = this.__ob__

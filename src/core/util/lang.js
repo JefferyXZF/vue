@@ -26,7 +26,7 @@ export function def (obj: Object, key: string, val: any, enumerable?: boolean) {
     writable: true,
     configurable: true
   })
-}
+} 
 
 /**
  * Parse simple path.

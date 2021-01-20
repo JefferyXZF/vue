@@ -63,7 +63,10 @@ export function initState (vm: Component) {
   }
 }
 /**
- * @description 实现流程：1、检验props的key 2、定义响应式对象  3、将props的key代理到vm
+ * @description 实现流程：
+ * 1、检验props的key, 取得 value 值
+ * 2、defineReactive 定义响应式对象
+ * 3、将 props 的key代理到 vm
  * @author jeffery
  * @date 2020-12-30
  * @param {Component} vm
@@ -118,14 +121,18 @@ function initProps (vm: Component, propsOptions: Object) {
 }
 
 /**
- * @description 实现流程 1、得到data对象 2、检验data的key是否和props、methods有重合
- * 3、代理data到vm上 4、定义响应式对象 observe
+ * @description 实现流程
+ * 1、得到 data 对象
+ * 2、检验data的 key是否和props、methods有重合
+ * 3、将 data 的 key 不是 _、$ 代理到 vm上
+ * 4、定义响应式对象 observe
  * @author jeffery
  * @date 2020-12-30
  * @param {Component} vm
  */
 function initData (vm: Component) {
   let data = vm.$options.data
+  // 根实例时，data是一个对象，子组件的data是一个函数，其中getData会调用函数返回data对象
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -145,6 +152,7 @@ function initData (vm: Component) {
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
+      // 命名不能和方法重复
       if (methods && hasOwn(methods, key)) {
         warn(
           `Method "${key}" has already been defined as a data property.`,
@@ -152,17 +160,20 @@ function initData (vm: Component) {
         )
       }
     }
+    // 命名不能和props重复
     if (props && hasOwn(props, key)) {
       process.env.NODE_ENV !== 'production' && warn(
         `The data property "${key}" is already declared as a prop. ` +
         `Use prop default value instead.`,
         vm
       )
+      // 数据代理，用户可直接通过vm实例返回data数据，命名不能以$、_开头
     } else if (!isReserved(key)) {
       proxy(vm, `_data`, key)
     }
   }
   // observe data
+  // 将对象标识为响应式对象
   observe(data, true /* asRootData */)
 }
 
@@ -182,8 +193,10 @@ export function getData (data: Function, vm: Component): any {
 const computedWatcherOptions = { lazy: true }
 
 /**
- * @description 实例化 Watcher, 通过 Object.defineProperty ，get
- * set 方法中调用 watch 实例，实现响应式
+ * @description
+ * 1、computed可以是对象，也可以是函数，但是对象必须有getter方法,因此如果computed中的属性值是对象时需要进行验证。
+ * 2、针对computed的每个属性，要创建一个监听的依赖，也就是实例化一个watcher,
+ * watcher的定义，可以暂时理解为数据使用的依赖本身，一个watcher实例代表多了一个需要被监听的数据依赖。
  * @author jeffery
  * @date 2020-12-30
  * @param {Component} vm
@@ -198,6 +211,7 @@ function initComputed (vm: Component, computed: Object) {
   for (const key in computed) {
     const userDef = computed[key]
     const getter = typeof userDef === 'function' ? userDef : userDef.get
+    // 要保证有getter方法
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
         `Getter is missing for computed property "${key}".`,
@@ -219,8 +233,10 @@ function initComputed (vm: Component, computed: Object) {
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
     if (!(key in vm)) {
+      // 设置为响应式数据
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
+      // 不能和props，data命名冲突
       if (key in vm.$data) {
         warn(`The computed property "${key}" is already defined in data.`, vm)
       } else if (vm.$options.props && key in vm.$options.props) {
@@ -244,6 +260,7 @@ export function defineComputed (
   key: string,
   userDef: Object | Function
 ) {
+  // 非服务端渲染会对getter进行缓存
   const shouldCache = !isServerRendering()
   if (typeof userDef === 'function') {
     sharedPropertyDefinition.get = shouldCache
@@ -274,6 +291,7 @@ function createComputedGetter (key) {
   return function computedGetter () {
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
+      // dirty是标志是否已经执行过计算结果，如果执行过则不会执行watcher.evaluate重复计算，这也是缓存的原理
       if (watcher.dirty) {
         watcher.evaluate()
       }
@@ -291,10 +309,21 @@ function createGetterInvoker(fn) {
   }
 }
 
+/**
+ * @description 实现流程：
+ * 1、检验是否和 props 的 Key 重复
+ * 2、检验 重复定义 methods 方法，并且不用使用 _ $ 开头
+ * 3、将 methods 方法绑定在 vm 上
+ * @author jeffery
+ * @date 2021-01-19
+ * @param {Component} vm
+ * @param {Object} methods
+ */
 function initMethods (vm: Component, methods: Object) {
   const props = vm.$options.props
   for (const key in methods) {
     if (process.env.NODE_ENV !== 'production') {
+      // method必须为函数形式
       if (typeof methods[key] !== 'function') {
         warn(
           `Method "${key}" has type "${typeof methods[key]}" in the component definition. ` +
@@ -302,12 +331,14 @@ function initMethods (vm: Component, methods: Object) {
           vm
         )
       }
+      // methods方法名不能和props重复
       if (props && hasOwn(props, key)) {
         warn(
           `Method "${key}" has already been defined as a prop.`,
           vm
         )
       }
+      //  不能以_ or $.这些Vue保留标志开头
       if ((key in vm) && isReserved(key)) {
         warn(
           `Method "${key}" conflicts with an existing Vue instance method. ` +
@@ -315,6 +346,7 @@ function initMethods (vm: Component, methods: Object) {
         )
       }
     }
+     // 直接挂载到实例的属性上,可以通过vm[method]访问。
     vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
   }
 }
@@ -403,6 +435,7 @@ export function stateMixin (Vue: Class<Component>) {
     options = options || {}
     options.user = true
     const watcher = new Watcher(vm, expOrFn, cb, options)
+     // 当watch有immediate选项时，立即执行cb方法，即不需要等待属性变化，立刻执行回调。
     if (options.immediate) {
       try {
         cb.call(vm, watcher.value)

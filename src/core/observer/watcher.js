@@ -43,11 +43,11 @@ export default class Watcher {
   value: any;
 
   constructor (
-    vm: Component,
-    expOrFn: string | Function,
-    cb: Function,
-    options?: ?Object,
-    isRenderWatcher?: boolean
+    vm: Component, // 组件实例
+    expOrFn: string | Function, // 执行函数
+    cb: Function, // 回调
+    options?: ?Object, // 配置
+    isRenderWatcher?: boolean // 是否为渲染watcher
   ) {
     this.vm = vm
     if (isRenderWatcher) { // 渲染 watcher 标识
@@ -57,7 +57,7 @@ export default class Watcher {
     // options
     if (options) {
       this.deep = !!options.deep // 深度监听
-      this.user = !!options.user // 用户定义 watcher
+      this.user = !!options.user // 用户定义 user watcher
       this.lazy = !!options.lazy // computed watcher
       this.sync = !!options.sync // 同步 watcher
       this.before = options.before
@@ -90,6 +90,7 @@ export default class Watcher {
         )
       }
     }
+    // lazy为计算属性标志，当watcher为计算watcher时，不会立即执行get方法进行求值
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -116,6 +117,7 @@ export default class Watcher {
       if (this.deep) {
         traverse(value)
       }
+      // 把Dep.target恢复到上一个状态，依赖收集过程完成
       popTarget()
       this.cleanupDeps()
     }
@@ -128,6 +130,7 @@ export default class Watcher {
   addDep (dep: Dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
+      // newDepIds和newDeps记录watcher拥有的数据
       this.newDepIds.add(id)
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
@@ -139,6 +142,9 @@ export default class Watcher {
   /**
    * Clean up for dependency collection.
    */
+  // 关于依赖清除的作用，我们列举一个场景： 我们经常会使用v-if来进行模板的切换，切换过程中会执行不同的模板渲染，
+  // 如果A模板监听a数据，B模板监听b数据，当渲染模板B时，如果不进行旧依赖的清除，在B模板的场景下，a数据的变化同样会引起依赖的重新渲染更新，
+  // 这会造成性能的浪费。因此旧依赖的清除在优化阶段是有必要。
   cleanupDeps () {
     let i = this.deps.length
     while (i--) {

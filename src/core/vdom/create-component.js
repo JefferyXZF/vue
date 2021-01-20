@@ -161,6 +161,7 @@ export function createComponent (
   }
 
   // extract props
+  // props传递给占位符组件的写法，会以propsData的形式作为子组件Vnode的属性存在
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
   // functional component
@@ -232,7 +233,7 @@ export function createComponentInstanceForVnode (
   return new vnode.componentOptions.Ctor(options)
 }
 
-// 将 componentVNodeHooks 钩子函数合并到组件data.hook中 
+// 将 componentVNodeHooks 钩子函数合并到组件data.hook中
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {

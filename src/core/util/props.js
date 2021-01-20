@@ -26,8 +26,11 @@ export function validateProp (
 ): any {
   const prop = propOptions[key]
   const absent = !hasOwn(propsData, key)
+  // 从父组件传递的 prop 数据
   let value = propsData[key]
   // boolean casting
+  // 处理 Boolean 类型的数据
+  // 判断 prop 的定义是否是 Boolean 类型的。
   const booleanIndex = getTypeIndex(Boolean, prop.type)
   if (booleanIndex > -1) {
     if (absent && !hasOwn(prop, 'default')) {
@@ -42,6 +45,7 @@ export function validateProp (
     }
   }
   // check default value
+  // 处理默认数据
   if (value === undefined) {
     value = getPropDefaultValue(vm, prop, key)
     // since the default value is a fresh copy,
@@ -56,6 +60,12 @@ export function validateProp (
     // skip validation for weex recycle-list child component props
     !(__WEEX__ && isObject(value) && ('@binding' in value))
   ) {
+    // assertProp 函数的目的是断言这个 prop 是否合法
+    // 先判断如果 prop 定义了 required 属性但父组件没有传递这个 prop 数据的话会报一个警告。
+
+    // 接着判断如果 value 为空且 prop 没有定义 required 属性则直接返回。
+
+    // 然后再去对 prop 的类型做校验，先是拿到 prop 中定义的类型 type，并尝试把它转成一个类型数组，然后依次遍历这个数组，执行 assertType(value, type[i]) 去获取断言的结果，直到遍历完成或者是 valid 为 true 的时候跳出循环。
     assertProp(prop, key, value, vm, absent)
   }
   return value

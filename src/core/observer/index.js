@@ -22,6 +22,7 @@ const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
  * In some cases we may want to disable observation inside a component's
  * update computation.
  */
+// 用来控制在 observe 的过程中是否需要把当前值变成一个 Observer 对象。
 export let shouldObserve: boolean = true
 
 export function toggleObserving (value: boolean) {
@@ -35,6 +36,8 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
+// 观察者类，对象只要设置成拥有观察属性，则对象下的所有属性都会重写getter和setter方法，
+// 而getter，setting方法会进行依赖的收集和派发更新
 export class Observer {
   value: any;
   dep: Dep;
@@ -44,6 +47,7 @@ export class Observer {
     this.value = value
     this.dep = new Dep() // 依赖收集
     this.vmCount = 0
+    // __ob__属性是作为响应式对象的标志，不可枚举
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
@@ -135,6 +139,8 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
  * 定义响应式对象
  * Define a reactive property on an Object.
  */
+// 依赖收集的过程，每个数据就是一个依赖管理器，而每个使用数据的地方就是一个依赖。当访问到数据时，
+// 会将当前访问的场景作为一个依赖收集到依赖管理器中，同时也会为这个场景的依赖收集拥有的数据。
 export function defineReactive (
   obj: Object,
   key: string,
@@ -142,11 +148,12 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
-  const dep = new Dep() // 依赖收集对象
+  // 每个数据实例化一个Dep类，创建一个依赖的管理
+  const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
 
-  // 如果设置 configurable 为 false，则不设置响应式，可以作为性能优化的方式
+  // 如果设置 configurable 为 false，则不设置响应式，可以作为性能优化
   if (property && property.configurable === false) {
     return
   }
@@ -157,7 +164,7 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-  // 递归处理，嵌套对象深度响应式
+  // 这一部分的逻辑是针对深层次的对象，如果对象的属性是一个对象，则会递归调用实例化Observe类，让其属性值也转换为响应式对象
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -165,9 +172,9 @@ export function defineReactive (
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend() // 依赖收集
+        dep.depend() // 依赖收集，为当前watcher添加dep数据
         if (childOb) {
-          childOb.dep.depend() // 嵌套对象/数组类型，添加依赖收集
+          childOb.dep.depend() // 嵌套对象、数组类型，添加依赖收集
           if (Array.isArray(value)) { // 数组类型，对每一项做依赖收集
             dependArray(value)
           }
@@ -192,6 +199,7 @@ export function defineReactive (
       } else {
         val = newVal
       }
+      // 新值为对象时，会为新对象进行依赖收集过程
       childOb = !shallow && observe(newVal)
       dep.notify()
     }
@@ -209,11 +217,13 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   ) {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  // 数组场景，调用重写的splice方法，对新添加属性收集依赖。
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.length = Math.max(target.length, key)
     target.splice(key, 1, val)
     return val
   }
+  // 新增对象的属性存在时，直接返回新属性，触发依赖收集
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
@@ -226,10 +236,12 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+   // 目标源对象本身不是一个响应式对象，则不需要处理
   if (!ob) {
     target[key] = val
     return val
   }
+  // 手动调用defineReactive，为新属性设置getter,setter
   defineReactive(ob.value, key, val)
   ob.dep.notify()
   return val

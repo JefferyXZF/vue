@@ -69,6 +69,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     counter = (counter + 1) % 2
     textNode.data = String(counter)
   }
+  // 使用微任务队列的标志
   isUsingMicroTask = true
 } else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
   // Fallback to setImmediate.
@@ -83,9 +84,19 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     setTimeout(flushCallbacks, 0)
   }
 }
-
+/**
+ * @description
+ * Promise > MutataionObserver > setImmediate > setTimeout
+ * @author jeffery
+ * @date 2021-01-20
+ * @export
+ * @param {Function} [cb]
+ * @param {Object} [ctx]
+ * @returns
+ */
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+   // callbacks是维护微任务的数组。
   callbacks.push(() => {
     if (cb) {
       try {
@@ -98,10 +109,12 @@ export function nextTick (cb?: Function, ctx?: Object) {
     }
   })
   if (!pending) {
+    // 将维护的队列推到微任务队列中维护
     pending = true
     timerFunc()
   }
   // $flow-disable-line
+  // nextTick没有传递参数，且浏览器支持Promise,则返回一个promise对象
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve
