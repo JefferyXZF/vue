@@ -33,7 +33,9 @@ import {
 } from 'weex/runtime/recycle-list/render-component-template'
 
 // inline hooks to be invoked on component VNodes during patch
+// patch 执行组件内部钩子函数
 const componentVNodeHooks = {
+  //
   init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
@@ -69,7 +71,7 @@ const componentVNodeHooks = {
     const { context, componentInstance } = vnode
     if (!componentInstance._isMounted) {
       componentInstance._isMounted = true
-      callHook(componentInstance, 'mounted')
+      callHook(componentInstance, 'mounted') // 自组件挂载完成
     }
     if (vnode.data.keepAlive) {
       if (context._isMounted) {
@@ -109,7 +111,7 @@ export function createComponent (
   if (isUndef(Ctor)) {
     return
   }
-
+  /*_base存放了Vue,作为基类，可以在里面添加扩展*/
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
@@ -120,6 +122,7 @@ export function createComponent (
 
   // if at this stage it's not a constructor or an async component factory,
   // reject.
+  /*如果在该阶段Ctor依然不是一个构造函数或者是一个异步组件工厂则直接返回*/
   if (typeof Ctor !== 'function') {
     if (process.env.NODE_ENV !== 'production') {
       warn(`Invalid Component definition: ${String(Ctor)}`, context)
@@ -138,6 +141,7 @@ export function createComponent (
       // as a comment node but preserves all the raw information for the node.
       // the information will be used for async server-rendering and hydration.
       // 创建注释节点
+      /*如果这是一个异步组件则会不会返回任何东西（undifiened），直接return掉，等待回调函数去触发父组件更新。s*/
       return createAsyncPlaceholder(
         asyncFactory,
         data,

@@ -103,6 +103,7 @@ export function createPatchFunction (backend) {
     return remove
   }
 
+  /*将某个el节点从文档中移除*/
   function removeNode (el) {
     const parent = nodeOps.parentNode(el)
     // element may have already been removed due to v-html / v-text
@@ -129,6 +130,7 @@ export function createPatchFunction (backend) {
 
   let creatingElmInVPre = 0
   /**
+   * 创建一个节点
    * @description 通过虚拟节点创建真实的 DOM 并插入到它的父节点中
    * @author jeffery
    * @date 2020-12-31
@@ -212,6 +214,7 @@ export function createPatchFunction (backend) {
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
+        // 将 vnode 元素 插入到父节点
         insert(parentElm, vnode.elm, refElm)
       }
 
@@ -227,6 +230,7 @@ export function createPatchFunction (backend) {
     }
   }
 
+  /*创建一个组件*/
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     // 是否有钩子函数可以作为判断是否为组件的唯一条件
@@ -239,7 +243,13 @@ export function createPatchFunction (backend) {
       // it should've created a child instance and mounted it. the child
       // component also has set the placeholder vnode's elm.
       // in that case we can just return the element and be done.
+       /*
+        在调用了init钩子以后，如果VNode是一个子组件，它应该已经创建了一个子组件实例并挂载它。
+        子组件也应该设置了一个VNode占位符，我们直接返回组件实例即可。
+        意思就是如果已经存在组件实例，则不需要重新创建一个新的，我们要做的就是初始化组件以及激活组件即可，还是用原来的组件实例。
+      */
       if (isDef(vnode.componentInstance)) {
+        /*初始化组件*/
         initComponent(vnode, insertedVnodeQueue)
         insert(parentElm, vnode.elm, refElm)
         if (isTrue(isReactivated)) {
@@ -251,12 +261,14 @@ export function createPatchFunction (backend) {
   }
 
   function initComponent (vnode, insertedVnodeQueue) {
+    /*把之前已经存在的VNode队列合并进去*/
     if (isDef(vnode.data.pendingInsert)) {
       insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert)
       vnode.data.pendingInsert = null
     }
     vnode.elm = vnode.componentInstance.$el
     if (isPatchable(vnode)) {
+      /*调用create钩子*/
       invokeCreateHooks(vnode, insertedVnodeQueue)
       setScope(vnode)
     } else {
@@ -794,7 +806,7 @@ export function createPatchFunction (backend) {
 
         // replacing existing element
         const oldElm = oldVnode.elm
-        const parentElm = nodeOps.parentNode(oldElm)
+        const parentElm = nodeOps.parentNode(oldElm) // 拿到父元素，根挂载元素是body
 
         // create new node
         createElm(
@@ -839,7 +851,7 @@ export function createPatchFunction (backend) {
 
         // destroy old node
         if (isDef(parentElm)) {
-          removeVnodes([oldVnode], 0, 0)
+          removeVnodes([oldVnode], 0, 0) // 移除旧的节点
         } else if (isDef(oldVnode.tag)) {
           invokeDestroyHook(oldVnode)
         }

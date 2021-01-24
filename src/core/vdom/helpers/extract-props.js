@@ -39,7 +39,7 @@ export function extractPropsFromVNodeData (
   const { attrs, props } = data
   if (isDef(attrs) || isDef(props)) {
     for (const key in propOptions) {
-      // aB 形式转成 a-b
+      // aB 形式转成 a-b 
       const altKey = hyphenate(key)
       if (process.env.NODE_ENV !== 'production') {
         const keyInLowerCase = key.toLowerCase()

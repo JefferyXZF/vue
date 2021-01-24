@@ -10,7 +10,7 @@ import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
 
 /**
- * 使用缓存，获取元素 DOM 的 innerHTML
+ * cached 闭包函数实现缓存，获取元素 DOM 的 innerHTML
  */
 const idToTemplate = cached(id => {
   const el = query(id)
@@ -25,10 +25,10 @@ const mount = Vue.prototype.$mount
  * @param {*} hydrating
  */
 Vue.prototype.$mount = function (
-  el?: string | Element,
-  hydrating?: boolean
+  el?: string | Element, // 接收字符串或 DOM 元素
+  hydrating?: boolean // 是否是服务端渲染
 ): Component {
-  el = el && query(el)
+  el = el && query(el) // 查询挂载的 DOM 节点
 
   /* istanbul ignore if */
   // 不能挂载在 body 或 html 标签下
@@ -39,10 +39,13 @@ Vue.prototype.$mount = function (
     return this
   }
 
+  // $options 是在调用 _init 方法中，mergeOption 选项合并赋值
   const options = this.$options
   // resolve template/el and convert to render function 解析 template或el成render 函数
+  // 模板执行优先级 render > template > el
   if (!options.render) {
     let template = options.template
+    // template 值可以是 id 标识，DOM, 和 组件字符串占位符
     if (template) {
       // 针对字符串模板和选择符匹配模板
       if (typeof template === 'string') {

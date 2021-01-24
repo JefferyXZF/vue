@@ -46,13 +46,13 @@ export function createElement (
   normalizationType: any,
   alwaysNormalize: boolean // 区分内部编译生成的render还是手写render
 ): VNode | Array<VNode> {
-  // 参数重载，对传入参数做处理，如果没有data，则将第三个参数作为第四个参数使用，往上类推
+  // 参数重载，对传入参数做处理，如果 data 是 数组或 基本类型，将它放在 children 位置，后面参数往后移
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
     data = undefined
   }
-  // 根据是alwaysNormalize 区分是内部编译使用的，还是用户手写render使用的
+  // 根据是 alwaysNormalize 区分是内部编译使用的，还是用户手写render使用的
   if (isTrue(alwaysNormalize)) {
     normalizationType = ALWAYS_NORMALIZE
   }
@@ -60,7 +60,7 @@ export function createElement (
 }
 
 /**
- * @description 创建元素
+ * @description 创建 vnode
  * @author jeffery
  * @date 2020-12-30
  * @export
@@ -78,7 +78,7 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
-  // 1. 数据对象不能是定义在Vue data属性中的响应式数据。
+  // 1. 数据对象不能是定义在 Vue data 属性中的响应式数据。
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
@@ -88,9 +88,11 @@ export function _createElement (
     return createEmptyVNode()
   }
   // object syntax in v-bind
+  // 动态组件
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
+  /*如果tag不存在也是创建一个空节点*/
   if (!tag) {
     // in case of component :is set to falsy value
     return createEmptyVNode()
@@ -109,6 +111,7 @@ export function _createElement (
     }
   }
   // support single function children as default scoped slot
+  /*默认作用域插槽*/
   if (Array.isArray(children) &&
     typeof children[0] === 'function'
   ) {
@@ -119,8 +122,8 @@ export function _createElement (
   if (normalizationType === ALWAYS_NORMALIZE) { // 多维数组降维，递归处理
     // 用户定义render函数
     children = normalizeChildren(children)
-  } else if (normalizationType === SIMPLE_NORMALIZE) { // 二维数组降维
-    // 模板编译生成的的render函数
+  } else if (normalizationType === SIMPLE_NORMALIZE) {
+    // 二维数组降维, 模板编译生成的的render函数
     children = simpleNormalizeChildren(children)
   }
   let vnode, ns
@@ -135,17 +138,21 @@ export function _createElement (
           context
         )
       }
+      /*如果是保留的标签则创建一个相应节点*/
       vnode = new VNode(
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
+      // 获得字类构造器
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
+      /*从vm实例的option的components中寻找该tag，存在则就是一个组件，创建相应节点，Ctor为组件的构造类*/
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
+      /*未知的元素，在运行时检查，因为父组件可能在序列化子组件的时候分配一个名字空间*/
       vnode = new VNode(
         tag, data, children,
         undefined, undefined, context
@@ -153,15 +160,18 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
+    /*tag不是字符串的时候则是组件的构造类*/
     vnode = createComponent(tag, data, context, children)
   }
   if (Array.isArray(vnode)) {
     return vnode
   } else if (isDef(vnode)) {
+    /*如果有名字空间，则递归所有子节点应用该名字空间*/
     if (isDef(ns)) applyNS(vnode, ns)
     if (isDef(data)) registerDeepBindings(data)
     return vnode
   } else {
+    /*如果vnode没有成功创建则创建空节点*/
     return createEmptyVNode()
   }
 }

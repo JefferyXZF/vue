@@ -157,9 +157,10 @@ export function mountComponent (
   el: ?Element,
   hydrating?: boolean
 ): Component {
-  vm.$el = el // 挂载 DOM 在 $el 
+  vm.$el = el // 挂载 DOM 在 $el
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode
+    // 不带 render 函数报警告
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
@@ -178,11 +179,12 @@ export function mountComponent (
       }
     }
   }
+  // 执行 beforeMount 钩子函数
   callHook(vm, 'beforeMount')
 
   let updateComponent
   /* istanbul ignore if */
-  if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+  if (process.env.NODE_ENV !== 'production' && config.performance && mark) { // 性能埋点
     updateComponent = () => {
       const name = vm._name
       const id = vm._uid
@@ -200,6 +202,8 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    // updateComponent 调用时机有两处：1、实例化 Watcher 回调函数中调用一次 2、定义在 data, props, computed 赋值，依赖收集派发更新调用（在 _render 函数会访问到其中的数据，会将 render Watch 进行依赖收集
+
     updateComponent = () => {
       vm._update(vm._render(), hydrating)
     }
@@ -209,6 +213,7 @@ export function mountComponent (
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
   // 渲染 watcher(render watcher)
+  /*这里对该vm注册一个Watcher实例，Watcher的getter为updateComponent函数，用于触发所有渲染所需要用到的数据的getter，进行依赖收集，该Watcher实例会存在所有渲染所需数据的闭包Dep中*/
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -222,7 +227,7 @@ export function mountComponent (
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
     vm._isMounted = true
-    callHook(vm, 'mounted')
+    callHook(vm, 'mounted') // 执行 mounted 钩子函数
   }
   return vm
 }
@@ -348,6 +353,7 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+/*调用钩子函数并且触发钩子事件*/
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()

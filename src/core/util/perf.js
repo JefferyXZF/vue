@@ -15,7 +15,8 @@ if (process.env.NODE_ENV !== 'production') {
   ) {
     mark = tag => perf.mark(tag)
     measure = (name, startTag, endTag) => {
-      perf.measure(name, startTag, endTag)
+      console.log(perf.measure(name, startTag, endTag))
+      // perf.measure(name, startTag, endTag)
       perf.clearMarks(startTag)
       perf.clearMarks(endTag)
       // perf.clearMeasures(name)

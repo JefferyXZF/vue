@@ -90,7 +90,7 @@ export default class Watcher {
         )
       }
     }
-    // lazy为计算属性标志，当watcher为计算watcher时，不会立即执行get方法进行求值
+    // lazy为 computed 计算属性标志，当watcher为 computed watcher时，不会立即执行get方法进行求值
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -114,7 +114,7 @@ export default class Watcher {
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
-      if (this.deep) {
+      if (this.deep) { // 深度监听
         traverse(value)
       }
       // 把Dep.target恢复到上一个状态，依赖收集过程完成
@@ -169,12 +169,12 @@ export default class Watcher {
    */
   update () {
     /* istanbul ignore else */
-    if (this.lazy) {
+    if (this.lazy) { // computed watch
       this.dirty = true
-    } else if (this.sync) {
+    } else if (this.sync) { // 同步更新
       this.run()
     } else {
-      queueWatcher(this)
+      queueWatcher(this) // 异步队列更新
     }
   }
 
@@ -212,6 +212,7 @@ export default class Watcher {
   /**
    * Evaluate the value of the watcher.
    * This only gets called for lazy watchers.
+   * 专门给 computed watch 使用，只调用一次，实现缓存的原理
    */
   evaluate () {
     this.value = this.get()

@@ -2104,7 +2104,8 @@
     ) {
       mark = function (tag) { return perf.mark(tag); };
       measure = function (name, startTag, endTag) {
-        perf.measure(name, startTag, endTag);
+        console.log(perf.measure(name, startTag, endTag));
+        // perf.measure(name, startTag, endTag)
         perf.clearMarks(startTag);
         perf.clearMarks(endTag);
         // perf.clearMeasures(name)
@@ -2396,7 +2397,7 @@
     var props = data.props;
     if (isDef(attrs) || isDef(props)) {
       for (var key in propOptions) {
-        // aB 形式转成 a-b
+        // aB 形式转成 a-b 
         var altKey = hyphenate(key);
         {
           var keyInLowerCase = key.toLowerCase();
@@ -3241,7 +3242,9 @@
   /*  */
 
   // inline hooks to be invoked on component VNodes during patch
+  // patch 执行组件内部钩子函数
   var componentVNodeHooks = {
+    //
     init: function init (vnode, hydrating) {
       if (
         vnode.componentInstance &&
@@ -3278,7 +3281,7 @@
       var componentInstance = vnode.componentInstance;
       if (!componentInstance._isMounted) {
         componentInstance._isMounted = true;
-        callHook(componentInstance, 'mounted');
+        callHook(componentInstance, 'mounted'); // 自组件挂载完成
       }
       if (vnode.data.keepAlive) {
         if (context._isMounted) {
@@ -3318,7 +3321,7 @@
     if (isUndef(Ctor)) {
       return
     }
-
+    /*_base存放了Vue,作为基类，可以在里面添加扩展*/
     var baseCtor = context.$options._base;
 
     // plain options object: turn it into a constructor
@@ -3329,6 +3332,7 @@
 
     // if at this stage it's not a constructor or an async component factory,
     // reject.
+    /*如果在该阶段Ctor依然不是一个构造函数或者是一个异步组件工厂则直接返回*/
     if (typeof Ctor !== 'function') {
       {
         warn(("Invalid Component definition: " + (String(Ctor))), context);
@@ -3347,6 +3351,7 @@
         // as a comment node but preserves all the raw information for the node.
         // the information will be used for async server-rendering and hydration.
         // 创建注释节点
+        /*如果这是一个异步组件则会不会返回任何东西（undifiened），直接return掉，等待回调函数去触发父组件更新。s*/
         return createAsyncPlaceholder(
           asyncFactory,
           data,
@@ -3508,13 +3513,13 @@
     normalizationType,
     alwaysNormalize // 区分内部编译生成的render还是手写render
   ) {
-    // 参数重载，对传入参数做处理，如果没有data，则将第三个参数作为第四个参数使用，往上类推
+    // 参数重载，对传入参数做处理，如果 data 是 数组或 基本类型，将它放在 children 位置，后面参数往后移
     if (Array.isArray(data) || isPrimitive(data)) {
       normalizationType = children;
       children = data;
       data = undefined;
     }
-    // 根据是alwaysNormalize 区分是内部编译使用的，还是用户手写render使用的
+    // 根据是 alwaysNormalize 区分是内部编译使用的，还是用户手写render使用的
     if (isTrue(alwaysNormalize)) {
       normalizationType = ALWAYS_NORMALIZE;
     }
@@ -3522,7 +3527,7 @@
   }
 
   /**
-   * @description 创建元素
+   * @description 创建 vnode
    * @author jeffery
    * @date 2020-12-30
    * @export
@@ -3540,7 +3545,7 @@
     children,
     normalizationType
   ) {
-    // 1. 数据对象不能是定义在Vue data属性中的响应式数据。
+    // 1. 数据对象不能是定义在 Vue data 属性中的响应式数据。
     if (isDef(data) && isDef((data).__ob__)) {
        warn(
         "Avoid using observed data object as vnode data: " + (JSON.stringify(data)) + "\n" +
@@ -3550,9 +3555,11 @@
       return createEmptyVNode()
     }
     // object syntax in v-bind
+    // 动态组件
     if (isDef(data) && isDef(data.is)) {
       tag = data.is;
     }
+    /*如果tag不存在也是创建一个空节点*/
     if (!tag) {
       // in case of component :is set to falsy value
       return createEmptyVNode()
@@ -3571,6 +3578,7 @@
       }
     }
     // support single function children as default scoped slot
+    /*默认作用域插槽*/
     if (Array.isArray(children) &&
       typeof children[0] === 'function'
     ) {
@@ -3581,8 +3589,8 @@
     if (normalizationType === ALWAYS_NORMALIZE) { // 多维数组降维，递归处理
       // 用户定义render函数
       children = normalizeChildren(children);
-    } else if (normalizationType === SIMPLE_NORMALIZE) { // 二维数组降维
-      // 模板编译生成的的render函数
+    } else if (normalizationType === SIMPLE_NORMALIZE) {
+      // 二维数组降维, 模板编译生成的的render函数
       children = simpleNormalizeChildren(children);
     }
     var vnode, ns;
@@ -3597,17 +3605,21 @@
             context
           );
         }
+        /*如果是保留的标签则创建一个相应节点*/
         vnode = new VNode(
           config.parsePlatformTagName(tag), data, children,
           undefined, undefined, context
         );
+        // 获得字类构造器
       } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
         // component
+        /*从vm实例的option的components中寻找该tag，存在则就是一个组件，创建相应节点，Ctor为组件的构造类*/
         vnode = createComponent(Ctor, data, context, children, tag);
       } else {
         // unknown or unlisted namespaced elements
         // check at runtime because it may get assigned a namespace when its
         // parent normalizes children
+        /*未知的元素，在运行时检查，因为父组件可能在序列化子组件的时候分配一个名字空间*/
         vnode = new VNode(
           tag, data, children,
           undefined, undefined, context
@@ -3615,15 +3627,18 @@
       }
     } else {
       // direct component options / constructor
+      /*tag不是字符串的时候则是组件的构造类*/
       vnode = createComponent(tag, data, context, children);
     }
     if (Array.isArray(vnode)) {
       return vnode
     } else if (isDef(vnode)) {
+      /*如果有名字空间，则递归所有子节点应用该名字空间*/
       if (isDef(ns)) { applyNS(vnode, ns); }
       if (isDef(data)) { registerDeepBindings(data); }
       return vnode
     } else {
+      /*如果vnode没有成功创建则创建空节点*/
       return createEmptyVNode()
     }
   }
@@ -3734,6 +3749,7 @@
         // separately from one another. Nested component's render fns are called
         // when parent component is patched.
         currentRenderingInstance = vm;
+        /*调用render函数，返回一个VNode节点*/
         vnode = render.call(vm._renderProxy, vm.$createElement);
       } catch (e) {
         handleError(e, vm, "render");
@@ -4221,9 +4237,10 @@
     el,
     hydrating
   ) {
-    vm.$el = el; // 挂载 DOM 在 $el 
+    vm.$el = el; // 挂载 DOM 在 $el
     if (!vm.$options.render) {
       vm.$options.render = createEmptyVNode;
+      // 不带 render 函数报警告
       {
         /* istanbul ignore if */
         if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
@@ -4242,11 +4259,12 @@
         }
       }
     }
+    // 执行 beforeMount 钩子函数
     callHook(vm, 'beforeMount');
 
     var updateComponent;
     /* istanbul ignore if */
-    if ( config.performance && mark) {
+    if ( config.performance && mark) { // 性能埋点
       updateComponent = function () {
         var name = vm._name;
         var id = vm._uid;
@@ -4264,6 +4282,8 @@
         measure(("vue " + name + " patch"), startTag, endTag);
       };
     } else {
+      // updateComponent 调用时机有两处：1、实例化 Watcher 回调函数中调用一次 2、定义在 data, props, computed 赋值，依赖收集派发更新调用（在 _render 函数会访问到其中的数据，会将 render Watch 进行依赖收集
+
       updateComponent = function () {
         vm._update(vm._render(), hydrating);
       };
@@ -4273,6 +4293,7 @@
     // since the watcher's initial patch may call $forceUpdate (e.g. inside child
     // component's mounted hook), which relies on vm._watcher being already defined
     // 渲染 watcher(render watcher)
+    /*这里对该vm注册一个Watcher实例，Watcher的getter为updateComponent函数，用于触发所有渲染所需要用到的数据的getter，进行依赖收集，该Watcher实例会存在所有渲染所需数据的闭包Dep中*/
     new Watcher(vm, updateComponent, noop, {
       before: function before () {
         if (vm._isMounted && !vm._isDestroyed) {
@@ -4286,7 +4307,7 @@
     // mounted is called for render-created child components in its inserted hook
     if (vm.$vnode == null) {
       vm._isMounted = true;
-      callHook(vm, 'mounted');
+      callHook(vm, 'mounted'); // 执行 mounted 钩子函数
     }
     return vm
   }
@@ -4412,6 +4433,7 @@
     }
   }
 
+  /*调用钩子函数并且触发钩子事件*/
   function callHook (vm, hook) {
     // #7573 disable dep collection when invoking lifecycle hooks
     pushTarget();
@@ -4684,7 +4706,7 @@
         );
       }
     }
-    // lazy为计算属性标志，当watcher为计算watcher时，不会立即执行get方法进行求值
+    // lazy为 computed 计算属性标志，当watcher为 computed watcher时，不会立即执行get方法进行求值
     this.value = this.lazy
       ? undefined
       : this.get();
@@ -4708,7 +4730,7 @@
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
-      if (this.deep) {
+      if (this.deep) { // 深度监听
         traverse(value);
       }
       // 把Dep.target恢复到上一个状态，依赖收集过程完成
@@ -4763,12 +4785,12 @@
    */
   Watcher.prototype.update = function update () {
     /* istanbul ignore else */
-    if (this.lazy) {
+    if (this.lazy) { // computed watch
       this.dirty = true;
-    } else if (this.sync) {
+    } else if (this.sync) { // 同步更新
       this.run();
     } else {
-      queueWatcher(this);
+      queueWatcher(this); // 异步队列更新
     }
   };
 
@@ -4806,6 +4828,7 @@
   /**
    * Evaluate the value of the watcher.
    * This only gets called for lazy watchers.
+   * 专门给 computed watch 使用，只调用一次，实现缓存的原理
    */
   Watcher.prototype.evaluate = function evaluate () {
     this.value = this.get();
@@ -5268,7 +5291,7 @@
 
   var uid$2 = 0;
 
-  function initMixin (Vue) {
+  function  initMixin (Vue) {
     Vue.prototype._init = function (options) {
       var vm = this;
       // a uid
@@ -6228,6 +6251,7 @@
       return remove
     }
 
+    /*将某个el节点从文档中移除*/
     function removeNode (el) {
       var parent = nodeOps.parentNode(el);
       // element may have already been removed due to v-html / v-text
@@ -6254,6 +6278,7 @@
 
     var creatingElmInVPre = 0;
     /**
+     * 创建一个节点
      * @description 通过虚拟节点创建真实的 DOM 并插入到它的父节点中
      * @author jeffery
      * @date 2020-12-31
@@ -6319,6 +6344,7 @@
           if (isDef(data)) {
             invokeCreateHooks(vnode, insertedVnodeQueue);
           }
+          // 将 vnode 元素 插入到父节点
           insert(parentElm, vnode.elm, refElm);
         }
 
@@ -6334,6 +6360,7 @@
       }
     }
 
+    /*创建一个组件*/
     function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
       var i = vnode.data;
       // 是否有钩子函数可以作为判断是否为组件的唯一条件
@@ -6346,7 +6373,13 @@
         // it should've created a child instance and mounted it. the child
         // component also has set the placeholder vnode's elm.
         // in that case we can just return the element and be done.
+         /*
+          在调用了init钩子以后，如果VNode是一个子组件，它应该已经创建了一个子组件实例并挂载它。
+          子组件也应该设置了一个VNode占位符，我们直接返回组件实例即可。
+          意思就是如果已经存在组件实例，则不需要重新创建一个新的，我们要做的就是初始化组件以及激活组件即可，还是用原来的组件实例。
+        */
         if (isDef(vnode.componentInstance)) {
+          /*初始化组件*/
           initComponent(vnode, insertedVnodeQueue);
           insert(parentElm, vnode.elm, refElm);
           if (isTrue(isReactivated)) {
@@ -6358,12 +6391,14 @@
     }
 
     function initComponent (vnode, insertedVnodeQueue) {
+      /*把之前已经存在的VNode队列合并进去*/
       if (isDef(vnode.data.pendingInsert)) {
         insertedVnodeQueue.push.apply(insertedVnodeQueue, vnode.data.pendingInsert);
         vnode.data.pendingInsert = null;
       }
       vnode.elm = vnode.componentInstance.$el;
       if (isPatchable(vnode)) {
+        /*调用create钩子*/
         invokeCreateHooks(vnode, insertedVnodeQueue);
         setScope(vnode);
       } else {
@@ -6903,7 +6938,7 @@
 
           // replacing existing element
           var oldElm = oldVnode.elm;
-          var parentElm = nodeOps.parentNode(oldElm);
+          var parentElm = nodeOps.parentNode(oldElm); // 拿到父元素，根挂载元素是body
 
           // create new node
           createElm(
@@ -6948,7 +6983,7 @@
 
           // destroy old node
           if (isDef(parentElm)) {
-            removeVnodes([oldVnode], 0, 0);
+            removeVnodes([oldVnode], 0, 0); // 移除旧的节点
           } else if (isDef(oldVnode.tag)) {
             invokeDestroyHook(oldVnode);
           }
@@ -9422,6 +9457,7 @@
 
   /*  */
 
+  // Vue.options、Vue.config 在 initGlobalAPI 挂载全局属性和方法注册
   // install platform specific utils
   Vue.config.mustUseProp = mustUseProp;
   Vue.config.isReservedTag = isReservedTag; // html的保留标签
@@ -9435,7 +9471,7 @@
   // 注册全局组件  transition、transition-group
   extend(Vue.options.components, platformComponents);
 
-  // 安装平台 patch 方法 | install platform patch function 
+  // 注册原型方法__patch__，安装平台 patch 方法 | install platform patch function
   Vue.prototype.__patch__ = inBrowser ? patch : noop;
 
   // public mount method
@@ -12289,7 +12325,7 @@
   /*  */
 
   /**
-   * 使用缓存，获取元素 DOM 的 innerHTML
+   * cached 闭包函数实现缓存，获取元素 DOM 的 innerHTML
    */
   var idToTemplate = cached(function (id) {
     var el = query(id);
@@ -12304,10 +12340,10 @@
    * @param {*} hydrating
    */
   Vue.prototype.$mount = function (
-    el,
-    hydrating
+    el, // 接收字符串或 DOM 元素
+    hydrating // 是否是服务端渲染
   ) {
-    el = el && query(el);
+    el = el && query(el); // 查询挂载的 DOM 节点
 
     /* istanbul ignore if */
     // 不能挂载在 body 或 html 标签下
@@ -12318,10 +12354,13 @@
       return this
     }
 
+    // $options 是在调用 _init 方法中，mergeOption 选项合并赋值
     var options = this.$options;
     // resolve template/el and convert to render function 解析 template或el成render 函数
+    // 模板执行优先级 render > template > el
     if (!options.render) {
       var template = options.template;
+      // template 值可以是 id 标识，DOM, 和 组件字符串占位符
       if (template) {
         // 针对字符串模板和选择符匹配模板
         if (typeof template === 'string') {
