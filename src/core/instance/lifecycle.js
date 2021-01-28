@@ -32,7 +32,7 @@ export function setActiveInstance(vm: Component) {
 export function initLifecycle (vm: Component) {
   const options = vm.$options
 
-  // locate first non-abstract parent
+  // locate first non-abstract parent 赋值在子组件选项合并 initInternalComponent
   let parent = options.parent
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -48,11 +48,15 @@ export function initLifecycle (vm: Component) {
   vm.$children = []
   vm.$refs = {}
 
+  // render watch (渲染 Watch)
   vm._watcher = null
   vm._inactive = null
   vm._directInactive = false
+  // 是否已经挂载
   vm._isMounted = false
+  // 是否已经销毁
   vm._isDestroyed = false
+  // 是否正在被销毁
   vm._isBeingDestroyed = false
 }
 

@@ -59,8 +59,8 @@ if (process.env.NODE_ENV !== 'production') {
       // isAllowed用来判断模板上出现的变量是否合法。
       const isAllowed = allowedGlobals(key) ||
         (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data))
-      // _和$开头的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
-      // 1. warnReservedPrefix: 警告不能以$ _开头的变量
+      // _的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
+      // 1. warnReservedPrefix: 警告不能以 _开头的变量
       // 2. warnNonPresent: 警告模板出现的变量在vue实例中未定义
       if (!has && !isAllowed) {
         if (key in target.$data) warnReservedPrefix(target, key)

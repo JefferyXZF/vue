@@ -50,6 +50,7 @@ export class Observer {
     // __ob__属性是作为响应式对象的标志，不可枚举
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
+      // 重写数组原型方法
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
@@ -229,6 +230,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     return val
   }
   const ob = (target: any).__ob__
+  // 数据是组件实例，直接返回
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -243,6 +245,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   }
   // 手动调用defineReactive，为新属性设置getter,setter
   defineReactive(ob.value, key, val)
+  // 修改响应式数据派发更新
   ob.dep.notify()
   return val
 }
@@ -275,6 +278,7 @@ export function del (target: Array<any> | Object, key: any) {
   if (!ob) {
     return
   }
+  // 修改响应式数据派发更新
   ob.dep.notify()
 }
 

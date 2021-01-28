@@ -2171,8 +2171,8 @@
         // isAllowed用来判断模板上出现的变量是否合法。
         var isAllowed = allowedGlobals(key) ||
           (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data));
-        // _和$开头的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
-        // 1. warnReservedPrefix: 警告不能以$ _开头的变量
+        // _的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
+        // 1. warnReservedPrefix: 警告不能以 _开头的变量
         // 2. warnNonPresent: 警告模板出现的变量在vue实例中未定义
         if (!has && !isAllowed) {
           if (key in target.$data) { warnReservedPrefix(target, key); }
@@ -3966,7 +3966,7 @@
   function initEvents (vm) {
     vm._events = Object.create(null);
     vm._hasHookEvent = false;
-    // init parent attached events
+    // init parent attached events 赋值在子组件选项合并 initInternalComponent
     var listeners = vm.$options._parentListeners;
     if (listeners) {
       updateComponentListeners(vm, listeners);
@@ -4112,7 +4112,7 @@
   function initLifecycle (vm) {
     var options = vm.$options;
 
-    // locate first non-abstract parent
+    // locate first non-abstract parent 赋值在子组件选项合并 initInternalComponent
     var parent = options.parent;
     if (parent && !options.abstract) {
       while (parent.$options.abstract && parent.$parent) {
@@ -5322,13 +5322,13 @@
         );
       }
       /* istanbul ignore else */
-      // 如果支持 proxy, 代理到 _renderProxy
+      // 如果支持 proxy, 代理到 _renderProxy。使用场景：在 render 函数会用到，会进行数据的检测，如果数据没有定义在 vm 上，会报错提示
       {
         initProxy(vm);
       }
       // expose real self
       vm._self = vm;
-      // 初始化 $parent, $root, $children, $refs
+      // 建立父子组件和根组件联系。初始化 $parent, $root, $children, $refs
       initLifecycle(vm);
       // 初始化父组件附加事件
       initEvents(vm);

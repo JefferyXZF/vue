@@ -119,6 +119,7 @@ export default class Watcher {
       }
       // 把Dep.target恢复到上一个状态，依赖收集过程完成
       popTarget()
+      // 清空依赖收集
       this.cleanupDeps()
     }
     return value
@@ -166,6 +167,7 @@ export default class Watcher {
   /**
    * Subscriber interface.
    * Will be called when a dependency changes.
+   * 执行 watch
    */
   update () {
     /* istanbul ignore else */
@@ -221,6 +223,7 @@ export default class Watcher {
 
   /**
    * Depend on all deps collected by this watcher.
+   * 收集所有的 watch
    */
   depend () {
     let i = this.deps.length

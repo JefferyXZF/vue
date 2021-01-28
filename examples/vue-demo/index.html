@@ -10,7 +10,13 @@
   <body>
     <section class="todoapp">
       hello the world
+      <div>
+        {{ number }}
+      </div>
       <button @click="refresh">refresh</button>
+      <div>
+        <button @click="setComputed">setComputed</button>
+      </div>
     </section>
     <script src="../../dist/vue.js"></script>
     <script src="./api-demo//01-全局配置.js"></script>

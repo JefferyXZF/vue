@@ -4,19 +4,25 @@
 var app = new Vue({
   // app initial state
   data: {
-    newTodo: '',
-    editedTodo: null,
-    visibility: 'all'
+    newTodo: 0
   },
-  props: {
-    msg: {
-      type: String
+  computed: {
+    number: {
+      get () {
+        return this.newTodo + 1
+      },
+      set (val) {
+        console.log(val)
+      }
     }
   },
   methods: {
     refresh (e) {
-      console.error(e, '2--------------------------------')
-      this.$forceUpdate()
+      ++this.newTodo
+    },
+    setComputed () {
+      console.log('computed')
+      this.number = 2222
     }
   },
 })

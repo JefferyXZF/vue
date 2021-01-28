@@ -12,7 +12,7 @@
   * 3、合并策略：子组件 data 必须是一个函数，区分父子组件和实例组件合并。源码地址：src\core\util\options.js
   * 4、父、子组件都存在相同属性，子组件会覆盖父组件的值
   * 5、调用 initData 实现 data 响应式，data 的 key 不能和 props、methods 重复
-  * 6、通过 vm.xxx 访问到 data 的属性，不能使用 _ 或 $ 首字母开头，因为代理不了。 源码地址：src\core\instance\state.js
+  * 6、通过 vm.xxx 访问到 data 的属性，不能使用 _ 或 $ 首字母开头，否则代理不了。 源码地址：src\core\instance\state.js
   */
 
 //  var data = { a: 1 }
@@ -74,7 +74,7 @@
   * 实现流程：
   * a. computed 可以定位为函数或对象，如果是函数赋值为 getter 函数，setter 函数为空函数
   * b. 为 每一个 computed 计算属性实例化一个 Watch(lazy 为 true)，getter 作为 watch 的执行回调函数，computed 属性不能和 data、props 重名
-  * c. defineComputed 调用 Object.defineProperty 定义 get 和 set 方法，访问计算属性，触发 get 方法 调用 computedGetter 函数
+  * c. defineComputed 调用 Object.defineProperty 代理到 vm 上， 定义 get 和 set 方法，访问计算属性，触发 get 方法 调用 computedGetter 函数
   * d. computedGetter 取出当前 computed watch, 进行依赖收集，dirty 为 true ,调用 watcher.evaluate() 取得 watcher.value 值（缓存原理）
   * 源码地址：src\core\instance\state.js
   */
