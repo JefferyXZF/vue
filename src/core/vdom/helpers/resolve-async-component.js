@@ -44,6 +44,7 @@ export function resolveAsyncComponent (
   factory: Function,
   baseCtor: Class<Component>
 ): Class<Component> | void {
+  // 高级异步组件
   if (isTrue(factory.error) && isDef(factory.errorComp)) {
     return factory.errorComp
   }
@@ -118,17 +119,22 @@ export function resolveAsyncComponent (
     if (isObject(res)) {
       if (isPromise(res)) {
         // () => Promise
+         // 返回对象，且res.component返回一个promise对象，进入分支
+        // 高级异步组件处理分支
         if (isUndef(factory.resolved)) {
           res.then(resolve, reject)
         }
       } else if (isPromise(res.component)) {
+        // 和promise异步组件处理方式相同
         res.component.then(resolve, reject)
 
         if (isDef(res.error)) {
+          // 异步错误时组件的处理，创建错误组件的子类构造器，并赋值给errorComp
           factory.errorComp = ensureCtor(res.error, baseCtor)
         }
 
         if (isDef(res.loading)) {
+          // 异步加载时组件的处理，创建错误组件的子类构造器，并赋值给errorComp
           factory.loadingComp = ensureCtor(res.loading, baseCtor)
           if (res.delay === 0) {
             factory.loading = true
@@ -144,6 +150,7 @@ export function resolveAsyncComponent (
         }
 
         if (isDef(res.timeout)) {
+          // 超过时间会成功加载，则执行失败结果
           timerTimeout = setTimeout(() => {
             timerTimeout = null
             if (isUndef(factory.resolved)) {

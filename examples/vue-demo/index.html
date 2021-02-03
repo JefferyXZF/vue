@@ -5,22 +5,20 @@
     <title>Vue.js • TodoMVC</title>
     <link rel="stylesheet" href="https://unpkg.com/todomvc-app-css@2.0.4/index.css">
     <script src="https://unpkg.com/director@1.2.8/build/director.js"></script>
-    <style>[v-cloak] { display: none; }</style>
+    <style>
+      [v-cloak] { display: none; }
+      .todoapp h1 {
+        margin-top: 300px;
+        color: #000;
+      }
+    </style>
   </head>
   <body>
     <section class="todoapp">
-      hello the world
-      <div>
-        {{ number }}
-      </div>
-      <button @click="refresh">refresh</button>
-      <div>
-        <button @click="setComputed">setComputed</button>
-      </div>
+      <h1> {{ msg }}</h1>
+      <!-- <h1> {{ test }}</h1> -->
     </section>
     <script src="../../dist/vue.js"></script>
-    <script src="./api-demo//01-全局配置.js"></script>
-    <script src="./api-demo//02-全局API.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

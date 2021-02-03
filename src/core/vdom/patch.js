@@ -759,7 +759,7 @@ export function createPatchFunction (backend) {
   return function patch (oldVnode, vnode, hydrating, removeOnly) {
     // 没有新节点
     if (isUndef(vnode)) {
-      // 有旧节点，删除操作
+      // 没新节点，有旧节点，删除节点
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
     }
