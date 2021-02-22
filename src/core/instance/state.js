@@ -81,10 +81,12 @@ function initProps (vm: Component, propsOptions: Object) {
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
+    // 子组件 props 嵌套对象不做响应式处理
     toggleObserving(false)
   }
   for (const key in propsOptions) {
     keys.push(key)
+    // 校验 props ，并取得 props 值
     const value = validateProp(key, propsOptions, propsData, vm)
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
@@ -196,7 +198,7 @@ const computedWatcherOptions = { lazy: true }
  * @description
  * 1、computed可以是对象，也可以是函数，但是对象必须有getter方法,因此如果computed中的属性值是对象时需要进行验证。
  * 2、针对computed的每个属性，要创建一个监听的依赖，也就是实例化一个watcher,
- * watcher的定义，可以暂时理解为数据使用的依赖本身，一个watcher实例代表多了一个需要被监听的数据依赖。
+ * watcher的定义，可以暂时理解为数据使用的依赖本身，一个watcher实例代表了一个需要被监听的数据依赖。
  * @author jeffery
  * @date 2020-12-30
  * @param {Component} vm

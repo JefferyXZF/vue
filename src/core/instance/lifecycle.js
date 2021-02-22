@@ -48,11 +48,15 @@ export function initLifecycle (vm: Component) {
   vm.$children = []
   vm.$refs = {}
 
+  // 初始化 render watch
   vm._watcher = null
   vm._inactive = null
   vm._directInactive = false
+  // 是否已经挂载
   vm._isMounted = false
+  // 是否已经销毁
   vm._isDestroyed = false
+  // 是否正在销毁
   vm._isBeingDestroyed = false
 }
 

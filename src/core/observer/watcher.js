@@ -126,6 +126,7 @@ export default class Watcher {
 
   /**
    * Add a dependency to this directive.
+   * render watch 收集访问到它到所有dep, dep 添加当前 watch
    */
   addDep (dep: Dep) {
     const id = dep.id

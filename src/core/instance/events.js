@@ -12,7 +12,7 @@ import { updateListeners } from '../vdom/helpers/index'
 export function initEvents (vm: Component) {
   vm._events = Object.create(null)
   vm._hasHookEvent = false
-  // init parent attached events
+  // 初始化父组件监听事件 init parent attached events
   const listeners = vm.$options._parentListeners
   if (listeners) {
     updateComponentListeners(vm, listeners)
@@ -49,15 +49,23 @@ export function updateComponentListeners (
   target = undefined
 }
 
+/**
+ * 注册事件处理流程
+ * 1、如果第一个参数是数组，递归处理
+ * 2、将注册的事件名和事件函数添加到 _events 对象下
+ * @param {*} Vue 
+ */
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
+    // 第一个参数是数组，递归处理
     if (Array.isArray(event)) {
       for (let i = 0, l = event.length; i < l; i++) {
         vm.$on(event[i], fn)
       }
     } else {
+      // 将事件添加到 _events 对象下
       (vm._events[event] || (vm._events[event] = [])).push(fn)
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
@@ -68,6 +76,13 @@ export function eventsMixin (Vue: Class<Component>) {
     return vm
   }
 
+  /**
+   * 只监听一次事件处理流程
+   * 1、$on 注册事件处理流程
+   * 2、监听过后，取消监听，执行函数
+   * @param {*} event 
+   * @param {*} fn 
+   */
   Vue.prototype.$once = function (event: string, fn: Function): Component {
     const vm: Component = this
     function on () {
@@ -79,9 +94,18 @@ export function eventsMixin (Vue: Class<Component>) {
     return vm
   }
 
+  /**
+   * 注销事件处理逻辑；_events 对象是存储所有注册对事件
+   * 1、如果不传参数，注销所有事件
+   * 2、如果第一个参数是数组，则进行递归处理
+   * 3、只闯入一个参数，注销该类型事件
+   * 4、如果传人两个参数，遍历删除该注册事件
+   * @param {*} event 
+   * @param {*} fn 
+   */
   Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
     const vm: Component = this
-    // all
+    // all 不传参数，清空所有到事件
     if (!arguments.length) {
       vm._events = Object.create(null)
       return vm
@@ -115,6 +139,13 @@ export function eventsMixin (Vue: Class<Component>) {
     return vm
   }
 
+  /**
+   * 派发事件处理流程
+   * 1、从 _event 对象中获取已经注册的事件
+   * 2、接收实参，遍历调用函数
+   * 3、invokeWithErrorHandling
+   * @param {*} event 
+   */
   Vue.prototype.$emit = function (event: string): Component {
     const vm: Component = this
     if (process.env.NODE_ENV !== 'production') {

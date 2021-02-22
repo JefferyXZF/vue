@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据响应式原理</title>
+</head>
+<body>
+
+  <div id="app">
+    <p>计数 {{ num }}</p><button @click="change">add</button>
+  </div>
+
+
+  <script src="../../dist/vue.js"></script>
+  <script>
+    debugger
+    var app = new Vue({
+    // app initial state
+    data: {
+      num: 0,
+    },
+    methods: {
+      change () {
+        this.num++
+      }
+    },
+    
+  })
+
+  // 挂载
+  app.$mount('#app')
+  </script>
+</body>
+</html>

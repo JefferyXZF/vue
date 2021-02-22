@@ -15,12 +15,15 @@ export function initProvide (vm: Component) {
 
 // 初始化 inject，并设置其值为响应式
 export function initInjections (vm: Component) {
+  // 从 provide 取得 inject 值
   const result = resolveInject(vm.$options.inject, vm)
   if (result) {
+    // 不对嵌套对象做响应式处理
     toggleObserving(false)
     Object.keys(result).forEach(key => {
       /* istanbul ignore else */
       if (process.env.NODE_ENV !== 'production') {
+        // 响应式处理
         defineReactive(vm, key, result[key], () => {
           warn(
             `Avoid mutating an injected value directly since the changes will be ` +

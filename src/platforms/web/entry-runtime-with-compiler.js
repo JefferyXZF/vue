@@ -28,7 +28,9 @@ Vue.prototype.$mount = function (
   el?: string | Element, // 接收字符串或 DOM 元素
   hydrating?: boolean // 是否是服务端渲染
 ): Component {
-  el = el && query(el) // 查询挂载的 DOM 节点
+  
+  // 查询挂载的 DOM 节点
+  el = el && query(el) 
 
   /* istanbul ignore if */
   // 不能挂载在 body 或 html 标签下

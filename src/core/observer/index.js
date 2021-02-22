@@ -48,6 +48,7 @@ export class Observer {
     this.dep = new Dep() // 依赖收集
     this.vmCount = 0
     // __ob__属性是作为响应式对象的标志，不可枚举
+    // __ob__ 主要有两个作用，一方面是为了标记数据是否被侦测了变化（保证同一个数据只被侦测一次），另一方面可以很方便地通过数据取到_ob__，从而拿到 observer实例上保存的依赖。当拦截到数组发生变化时，向依赖发送通知。除了侦测数组自身的变化外，数组中元素发生的变化也要侦测
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {

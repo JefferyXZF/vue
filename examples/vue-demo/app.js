@@ -1,25 +1,19 @@
 
-// app Vue instance
+
 
 var app = new Vue({
   // app initial state
   data: {
-    newTodo: '',
-    editedTodo: null,
-    visibility: 'all'
-  },
-  props: {
-    msg: {
-      type: String
-    }
+    newTodo: 0,
   },
   methods: {
-    refresh (e) {
-      console.error(e, '2--------------------------------')
-      this.$forceUpdate()
+    change () {
+      this.newTodo++
     }
   },
+  
 })
 
+console.log(app.$options)
 // mount
 app.$mount('.todoapp')

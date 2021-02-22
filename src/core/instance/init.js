@@ -20,15 +20,16 @@ export function  initMixin (Vue: Class<Component>) {
 
     let startTag, endTag
     /* istanbul ignore if */
+    // 性能埋点
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
       startTag = `vue-perf-start:${vm._uid}`
       endTag = `vue-perf-end:${vm._uid}`
-      mark(startTag)
+      mark(startTag) // 性能标识
     }
 
-    // a flag to avoid this being observed
+    // 根实例，也是响应式判断处理的一个标识 a flag to avoid this being observed
     vm._isVue = true
-    // merge options，合并配置，初始化 $options
+    // 子组件选项合并 merge options，初始化 $options
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
@@ -43,7 +44,7 @@ export function  initMixin (Vue: Class<Component>) {
       )
     }
     /* istanbul ignore else */
-    // 如果支持 proxy, 代理到 _renderProxy
+    // 如果支持 proxy, 代理到 _renderProxy，使用场景，在开发环境中 render 函数 访问 vm 属性做校验
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm)
     } else {
@@ -51,9 +52,9 @@ export function  initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    // 初始化 $parent, $root, $children, $refs
+    // 初始化 $parent, $root, $children, $refs，组件之间建立层级关系
     initLifecycle(vm)
-    // 初始化父组件附加事件
+    // 处理父组件自定义事件 @xxx，将它注册在子组件 $on 上
     initEvents(vm)
     // 初始化 $slots, $scopedSlots, _c, $createElement, $attrs,  $listeners
     initRender(vm)
@@ -82,6 +83,7 @@ export function  initMixin (Vue: Class<Component>) {
 }
 
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
+  // 拿到 Sub 函数的 options(components、filters、directives)
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode
@@ -102,9 +104,10 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   let options = Ctor.options
-  if (Ctor.super) {
+  if (Ctor.super) { // super 属性在 Vue.extend 会赋值
     const superOptions = resolveConstructorOptions(Ctor.super)
     const cachedSuperOptions = Ctor.superOptions
+    // 处理 superOptions 混入新的数据的时候
     if (superOptions !== cachedSuperOptions) {
       // super option changed,
       // need to resolve new options.
@@ -127,7 +130,7 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
 function resolveModifiedOptions (Ctor: Class<Component>): ?Object {
   let modified
   const latest = Ctor.options
-  const sealed = Ctor.sealedOptions
+  const sealed = Ctor.sealedOptions // 当前 options 和 superOptions 合并后都值
   for (const key in latest) {
     if (latest[key] !== sealed[key]) {
       if (!modified) modified = {}

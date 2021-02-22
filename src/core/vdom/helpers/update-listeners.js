@@ -74,18 +74,21 @@ export function updateListeners (
         vm
       )
     } else if (isUndef(old)) {
-      if (isUndef(cur.fns)) {
+      // 没有注册过事件，直接添加事件
+      if (isUndef(cur.fns)) { // 没有 fns 值，初始化该值，可以处理数组类型
         cur = on[name] = createFnInvoker(cur, vm)
       }
-      if (isTrue(event.once)) {
+      if (isTrue(event.once)) { // $once 事件处理逻辑
         cur = on[name] = createOnceHandler(event.name, cur, event.capture)
       }
       add(event.name, cur, event.capture, event.passive, event.params)
     } else if (cur !== old) {
+      // 将新注册的事件覆盖原来的事件
       old.fns = cur
       on[name] = old
     }
   }
+  // 移除废弃都事件
   for (name in oldOn) {
     if (isUndef(on[name])) {
       event = normalizeEvent(name)
