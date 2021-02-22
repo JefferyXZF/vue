@@ -4,6 +4,7 @@ import { hasOwn } from 'shared/util'
 import { warn, hasSymbol } from '../util/index'
 import { defineReactive, toggleObserving } from '../observer/index'
 
+// 将 provide 值赋值给 vm 实例私有属性 _provided
 export function initProvide (vm: Component) {
   const provide = vm.$options.provide
   if (provide) {
@@ -13,7 +14,7 @@ export function initProvide (vm: Component) {
   }
 }
 
-// 初始化 inject，并设置其值为响应式
+// 初始化 inject，对外层做响应式处理
 export function initInjections (vm: Component) {
   // 从 provide 取得 inject 值
   const result = resolveInject(vm.$options.inject, vm)
@@ -52,6 +53,7 @@ export function resolveInject (inject: any, vm: Component): ?Object {
       const key = keys[i]
       // #6574 in case the inject object is observed...
       if (key === '__ob__') continue
+      // from 、default 属性在选项合并已经处理过
       const provideKey = inject[key].from
       let source = vm
       while (source) {

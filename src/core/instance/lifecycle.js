@@ -32,7 +32,7 @@ export function setActiveInstance(vm: Component) {
 export function initLifecycle (vm: Component) {
   const options = vm.$options
 
-  // locate first non-abstract parent
+  // locate first non-abstract parent 赋值在子组件选项合并 initInternalComponent
   let parent = options.parent
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -48,7 +48,7 @@ export function initLifecycle (vm: Component) {
   vm.$children = []
   vm.$refs = {}
 
-  // 初始化 render watch
+  // render watch (渲染 Watch)
   vm._watcher = null
   vm._inactive = null
   vm._directInactive = false
@@ -56,7 +56,7 @@ export function initLifecycle (vm: Component) {
   vm._isMounted = false
   // 是否已经销毁
   vm._isDestroyed = false
-  // 是否正在销毁
+  // 是否正在被销毁
   vm._isBeingDestroyed = false
 }
 
@@ -101,6 +101,14 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
   }
 
+  /**
+   * 组件销毁流程
+   * 1、判断组件是否已经被销毁，没有执行 beforeDestroy 钩子函数，进行正在执行销毁阶段
+   * 2、将组件实例从父组件 chilren 列表下删除，从依赖收集中移除该 watch 实例
+   * 3、移除 所有的 _watchers 依赖收集
+   * 4、patch 更新，执行 destroyed 钩子函数
+   * 5、取消所有的监听事件
+   */
   Vue.prototype.$destroy = function () {
     const vm: Component = this
     if (vm._isBeingDestroyed) {
@@ -113,7 +121,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
       remove(parent.$children, vm)
     }
-    // teardown watchers
+    // teardown watchers 移除 render watch
     if (vm._watcher) {
       vm._watcher.teardown()
     }
@@ -128,7 +136,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
     // call the last hook...
     vm._isDestroyed = true
-    // invoke destroy hooks on current rendered tree
+    // invoke destroy hooks on current rendered tree 移除 DOM 节点
     vm.__patch__(vm._vnode, null)
     // fire destroyed hook
     callHook(vm, 'destroyed')

@@ -46,7 +46,7 @@ export function createElement (
   normalizationType: any,
   alwaysNormalize: boolean // 区分内部编译生成的render还是手写render
 ): VNode | Array<VNode> {
-  // 参数重载，对传入参数做处理，如果 data 是 数组或 基本类型，将它放在 children 位置，后面参数往后移
+  // 参数重载，对传入参数做处理，如果 data 是 数组或 基本类型，将它放在 children 位置，后面参数往前移
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
@@ -119,6 +119,7 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+  // 子节点children规范化
   if (normalizationType === ALWAYS_NORMALIZE) { // 多维数组降维，递归处理
     // 用户定义render函数
     children = normalizeChildren(children)
@@ -143,7 +144,7 @@ export function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
-      // 获得字类构造器
+      // 获得注册的字类构造器
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       /*从vm实例的option的components中寻找该tag，存在则就是一个组件，创建相应节点，Ctor为组件的构造类*/

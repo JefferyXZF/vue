@@ -64,7 +64,7 @@ export function initState (vm: Component) {
 }
 /**
  * @description 实现流程：
- * 1、检验props的key, 取得 value 值
+ * 1、检验props的key, 取得 value 值（不会对接收父组件的嵌套对象做响应式处理，因为父组件在内层已经实现了响应式。不过会对 props 的 default 默认值做嵌套的响应式处理）
  * 2、defineReactive 定义响应式对象
  * 3、将 props 的key代理到 vm
  * @author jeffery
@@ -74,6 +74,7 @@ export function initState (vm: Component) {
  */
 function initProps (vm: Component, propsOptions: Object) {
   const propsData = vm.$options.propsData || {}
+  // 定义私有属性 _props
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
@@ -98,6 +99,7 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      // 定义 setter 方法，props 值只读
       defineReactive(props, key, value, () => {
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
@@ -134,11 +136,11 @@ function initProps (vm: Component, propsOptions: Object) {
  */
 function initData (vm: Component) {
   let data = vm.$options.data
-  // 根实例时，data是一个对象，子组件的data是一个函数，其中getData会调用函数返回data对象
+  // 定义私有属性 _data, 根实例时，data是一个对象，子组件的data是一个函数
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
-  if (!isPlainObject(data)) {
+  if (!isPlainObject(data)) { // data 对象断言
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
       'data functions should return an object:\n' +
@@ -297,6 +299,7 @@ function createComputedGetter (key) {
       if (watcher.dirty) {
         watcher.evaluate()
       }
+      // 将 computed watch 收集到当前 watch 实例下所有的 deps
       if (Dep.target) {
         watcher.depend()
       }
@@ -425,6 +428,14 @@ export function stateMixin (Vue: Class<Component>) {
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
+  /**
+   * user watch
+   * 执行流程：实例化 user watch，会调用一次 getter 方法，访问到 vm[xxx], 触发 xxx getter 方法的依赖收集，将当前的 user watch 添加到 dep 下
+   * 派发逻辑和之前的一样
+   * @param {*} expOrFn
+   * @param {*} cb
+   * @param {*} options
+   */
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,

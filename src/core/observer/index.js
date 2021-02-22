@@ -51,6 +51,7 @@ export class Observer {
     // __ob__ 主要有两个作用，一方面是为了标记数据是否被侦测了变化（保证同一个数据只被侦测一次），另一方面可以很方便地通过数据取到_ob__，从而拿到 observer实例上保存的依赖。当拦截到数组发生变化时，向依赖发送通知。除了侦测数组自身的变化外，数组中元素发生的变化也要侦测
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
+      // 重写数组原型方法
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
@@ -230,6 +231,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     return val
   }
   const ob = (target: any).__ob__
+  // 数据是组件实例，直接返回
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -244,6 +246,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
   }
   // 手动调用defineReactive，为新属性设置getter,setter
   defineReactive(ob.value, key, val)
+  // 修改响应式数据派发更新
   ob.dep.notify()
   return val
 }
@@ -276,6 +279,7 @@ export function del (target: Array<any> | Object, key: any) {
   if (!ob) {
     return
   }
+  // 修改响应式数据派发更新
   ob.dep.notify()
 }
 

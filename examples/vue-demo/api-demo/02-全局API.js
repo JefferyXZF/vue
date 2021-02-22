@@ -37,7 +37,7 @@
  * a. 将 nextTick 回调函数 push 到 callbacks 数组
  * b. pending 变量维护队列更新，调用 timerFunc 方法，如果回调函数为空，返回一个 promise 对象
  * c. timerFunc 是一个异步队列函数，微任务/宏任务优先级 Promise > MutationObserver > setImmediate > setTimeout
- * d. 将 flushCallbacks 函数放在 异步函数中执行
+ * d. 将 flushCallbacks 函数放在 异步函数回调中执行
  * 源码地址：src\core\util\next-tick.js
  */
 
@@ -55,9 +55,9 @@
 
 
  /**
- * 3、set  向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新
+ * 3、set 向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新
  * 实现流程：
- * a. 如果是数组类型，调用数组的 splice 实现，vue 已经对该方法实现了响应式
+ * a. 如果是数组类型，调用数组的 splice 实现，vue 在响应式处理已经对该方法实现了响应式
  * b. 新增的是响应式对象值，直接返回；不能添加到根组件实例下
  * c. 目标源对象不是响应式，直接返回，不做响应式处理
  * d. 调用 defineReactive 新增响应式值，并调用 ob.dep.notify() 派发更新
@@ -115,7 +115,7 @@
  * 实现流程：
  * a. 如果传一个参数，返回已注册的组件
  * b. 开发环境下，检验组件名称
- * b. 如果第二个参数是对象，调用 Vue.extend 实现继承
+ * b. 如果第二个参数是对象，调用 Vue.extend 实现继承，返回一个 Sub 字类构造器
  * 源码地址：src\core\global-api\assets.js
  */
 
@@ -130,10 +130,10 @@
 
 
  /**
- * 8、Vue.use 按照插件 Vue 拓展
+ * 8、Vue.use 按照插件， Vue 拓展
  * 实现流程：
  * a. Vue 使用单例模式，_installedPlugins 缓存已经按照过的插件，如果已经安装则直接返回
- * b. 将参数转化为数组，并且将 Vue 作为第一个参数
+ * b. 将参数转化为数组，并且将 Vue 插入其中作为第一个参数
  * b. 如果插件提供 install 方法，则调用该方法，否则调用插件函数
  * 源码地址：src\core\global-api\assets.js
  */

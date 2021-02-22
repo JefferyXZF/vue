@@ -935,6 +935,7 @@
     // __ob__ 主要有两个作用，一方面是为了标记数据是否被侦测了变化（保证同一个数据只被侦测一次），另一方面可以很方便地通过数据取到_ob__，从而拿到 observer实例上保存的依赖。当拦截到数组发生变化时，向依赖发送通知。除了侦测数组自身的变化外，数组中元素发生的变化也要侦测
     def(value, '__ob__', this);
     if (Array.isArray(value)) {
+      // 重写数组原型方法
       if (hasProto) {
         protoAugment(value, arrayMethods);
       } else {
@@ -1112,6 +1113,7 @@
       return val
     }
     var ob = (target).__ob__;
+    // 数据是组件实例，直接返回
     if (target._isVue || (ob && ob.vmCount)) {
       warn(
         'Avoid adding reactive properties to a Vue instance or its root $data ' +
@@ -1126,6 +1128,7 @@
     }
     // 手动调用defineReactive，为新属性设置getter,setter
     defineReactive$$1(ob.value, key, val);
+    // 修改响应式数据派发更新
     ob.dep.notify();
     return val
   }
@@ -1157,6 +1160,7 @@
     if (!ob) {
       return
     }
+    // 修改响应式数据派发更新
     ob.dep.notify();
   }
 
@@ -2172,8 +2176,8 @@
         // isAllowed用来判断模板上出现的变量是否合法。
         var isAllowed = allowedGlobals(key) ||
           (typeof key === 'string' && key.charAt(0) === '_' && !(key in target.$data));
-        // _和$开头的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
-        // 1. warnReservedPrefix: 警告不能以$ _开头的变量
+        // _的变量不允许出现在定义的数据中，因为他是vue内部保留属性的开头。
+        // 1. warnReservedPrefix: 警告不能以 _开头的变量
         // 2. warnNonPresent: 警告模板出现的变量在vue实例中未定义
         if (!has && !isAllowed) {
           if (key in target.$data) { warnReservedPrefix(target, key); }
@@ -2555,6 +2559,7 @@
 
   /*  */
 
+  // 将 provide 值赋值给 vm 实例私有属性 _provided
   function initProvide (vm) {
     var provide = vm.$options.provide;
     if (provide) {
@@ -2564,7 +2569,7 @@
     }
   }
 
-  // 初始化 inject，并设置其值为响应式
+  // 初始化 inject，对外层做响应式处理
   function initInjections (vm) {
     // 从 provide 取得 inject 值
     var result = resolveInject(vm.$options.inject, vm);
@@ -2601,6 +2606,7 @@
         var key = keys[i];
         // #6574 in case the inject object is observed...
         if (key === '__ob__') { continue }
+        // from 、default 属性在选项合并已经处理过
         var provideKey = inject[key].from;
         var source = vm;
         while (source) {
@@ -3529,7 +3535,7 @@
     normalizationType,
     alwaysNormalize // 区分内部编译生成的render还是手写render
   ) {
-    // 参数重载，对传入参数做处理，如果 data 是 数组或 基本类型，将它放在 children 位置，后面参数往后移
+    // 参数重载，对传入参数做处理，如果 data 是 数组或 基本类型，将它放在 children 位置，后面参数往前移
     if (Array.isArray(data) || isPrimitive(data)) {
       normalizationType = children;
       children = data;
@@ -3601,6 +3607,7 @@
       data.scopedSlots = { default: children[0] };
       children.length = 0;
     }
+    // 子节点children规范化
     if (normalizationType === ALWAYS_NORMALIZE) { // 多维数组降维，递归处理
       // 用户定义render函数
       children = normalizeChildren(children);
@@ -3625,7 +3632,7 @@
           config.parsePlatformTagName(tag), data, children,
           undefined, undefined, context
         );
-        // 获得字类构造器
+        // 获得注册的字类构造器
       } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
         // component
         /*从vm实例的option的components中寻找该tag，存在则就是一个组件，创建相应节点，Ctor为组件的构造类*/
@@ -3701,7 +3708,7 @@
     vm._vnode = null; // the root of the child tree
     vm._staticTrees = null; // v-once cached trees
     var options = vm.$options;
-    var parentVnode = vm.$vnode = options._parentVnode; // the placeholder node in parent tree
+    var parentVnode = vm.$vnode = options._parentVnode; // the placeholder node in parent tree 占位符 vnode
     var renderContext = parentVnode && parentVnode.context;
     vm.$slots = resolveSlots(options._renderChildren, renderContext);
     vm.$scopedSlots = emptyObject;
@@ -3836,6 +3843,7 @@
     factory,
     baseCtor
   ) {
+    // 高级异步组件
     if (isTrue(factory.error) && isDef(factory.errorComp)) {
       return factory.errorComp
     }
@@ -3910,17 +3918,22 @@
       if (isObject(res)) {
         if (isPromise(res)) {
           // () => Promise
+           // 返回对象，且res.component返回一个promise对象，进入分支
+          // 高级异步组件处理分支
           if (isUndef(factory.resolved)) {
             res.then(resolve, reject);
           }
         } else if (isPromise(res.component)) {
+          // 和promise异步组件处理方式相同
           res.component.then(resolve, reject);
 
           if (isDef(res.error)) {
+            // 异步错误时组件的处理，创建错误组件的子类构造器，并赋值给errorComp
             factory.errorComp = ensureCtor(res.error, baseCtor);
           }
 
           if (isDef(res.loading)) {
+            // 异步加载时组件的处理，创建错误组件的子类构造器，并赋值给errorComp
             factory.loadingComp = ensureCtor(res.loading, baseCtor);
             if (res.delay === 0) {
               factory.loading = true;
@@ -3936,6 +3949,7 @@
           }
 
           if (isDef(res.timeout)) {
+            // 超过时间会成功加载，则执行失败结果
             timerTimeout = setTimeout(function () {
               timerTimeout = null;
               if (isUndef(factory.resolved)) {
@@ -3982,7 +3996,7 @@
   function initEvents (vm) {
     vm._events = Object.create(null);
     vm._hasHookEvent = false;
-    // 初始化父组件监听事件 init parent attached events
+    // init parent attached events 赋值在子组件选项合并 initInternalComponent
     var listeners = vm.$options._parentListeners;
     if (listeners) {
       updateComponentListeners(vm, listeners);
@@ -4159,7 +4173,7 @@
   function initLifecycle (vm) {
     var options = vm.$options;
 
-    // locate first non-abstract parent
+    // locate first non-abstract parent 赋值在子组件选项合并 initInternalComponent
     var parent = options.parent;
     if (parent && !options.abstract) {
       while (parent.$options.abstract && parent.$parent) {
@@ -4175,7 +4189,7 @@
     vm.$children = [];
     vm.$refs = {};
 
-    // 初始化 render watch
+    // render watch (渲染 Watch)
     vm._watcher = null;
     vm._inactive = null;
     vm._directInactive = false;
@@ -4183,7 +4197,7 @@
     vm._isMounted = false;
     // 是否已经销毁
     vm._isDestroyed = false;
-    // 是否正在销毁
+    // 是否正在被销毁
     vm._isBeingDestroyed = false;
   }
 
@@ -4228,6 +4242,14 @@
       }
     };
 
+    /**
+     * 组件销毁流程
+     * 1、判断组件是否已经被销毁，没有执行 beforeDestroy 钩子函数，进行正在执行销毁阶段
+     * 2、将组件实例从父组件 chilren 列表下删除，从依赖收集中移除该 watch 实例
+     * 3、移除 所有的 _watchers 依赖收集
+     * 4、patch 更新，执行 destroyed 钩子函数
+     * 5、取消所有的监听事件
+     */
     Vue.prototype.$destroy = function () {
       var vm = this;
       if (vm._isBeingDestroyed) {
@@ -4240,7 +4262,7 @@
       if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
         remove(parent.$children, vm);
       }
-      // teardown watchers
+      // teardown watchers 移除 render watch
       if (vm._watcher) {
         vm._watcher.teardown();
       }
@@ -4255,7 +4277,7 @@
       }
       // call the last hook...
       vm._isDestroyed = true;
-      // invoke destroy hooks on current rendered tree
+      // invoke destroy hooks on current rendered tree 移除 DOM 节点
       vm.__patch__(vm._vnode, null);
       // fire destroyed hook
       callHook(vm, 'destroyed');
@@ -4785,6 +4807,7 @@
       }
       // 把Dep.target恢复到上一个状态，依赖收集过程完成
       popTarget();
+      // 清空依赖收集
       this.cleanupDeps();
     }
     return value
@@ -4833,6 +4856,7 @@
   /**
    * Subscriber interface.
    * Will be called when a dependency changes.
+   * 执行 watch
    */
   Watcher.prototype.update = function update () {
     /* istanbul ignore else */
@@ -4888,6 +4912,7 @@
 
   /**
    * Depend on all deps collected by this watcher.
+   * 收集所有的 watch
    */
   Watcher.prototype.depend = function depend () {
     var i = this.deps.length;
@@ -4953,7 +4978,7 @@
   }
   /**
    * @description 实现流程：
-   * 1、检验props的key, 取得 value 值
+   * 1、检验props的key, 取得 value 值（不会对接收父组件的嵌套对象做响应式处理，因为父组件在内层已经实现了响应式。不过会对 props 的 default 默认值做嵌套的响应式处理）
    * 2、defineReactive 定义响应式对象
    * 3、将 props 的key代理到 vm
    * @author jeffery
@@ -4963,6 +4988,7 @@
    */
   function initProps (vm, propsOptions) {
     var propsData = vm.$options.propsData || {};
+    // 定义私有属性 _props
     var props = vm._props = {};
     // cache prop keys so that future props updates can iterate using Array
     // instead of dynamic object key enumeration.
@@ -4987,6 +5013,7 @@
             vm
           );
         }
+        // 定义 setter 方法，props 值只读
         defineReactive$$1(props, key, value, function () {
           if (!isRoot && !isUpdatingChildComponent) {
             warn(
@@ -5023,11 +5050,11 @@
    */
   function initData (vm) {
     var data = vm.$options.data;
-    // 根实例时，data是一个对象，子组件的data是一个函数，其中getData会调用函数返回data对象
+    // 定义私有属性 _data, 根实例时，data是一个对象，子组件的data是一个函数
     data = vm._data = typeof data === 'function'
       ? getData(data, vm)
       : data || {};
-    if (!isPlainObject(data)) {
+    if (!isPlainObject(data)) { // data 对象断言
       data = {};
       warn(
         'data functions should return an object:\n' +
@@ -5185,6 +5212,7 @@
         if (watcher.dirty) {
           watcher.evaluate();
         }
+        // 将 computed watch 收集到当前 watch 实例下所有的 deps
         if (Dep.target) {
           watcher.depend();
         }
@@ -5313,6 +5341,14 @@
     Vue.prototype.$set = set;
     Vue.prototype.$delete = del;
 
+    /**
+     * user watch
+     * 执行流程：实例化 user watch，会调用一次 getter 方法，访问到 vm[xxx], 触发 xxx getter 方法的依赖收集，将当前的 user watch 添加到 dep 下
+     * 派发逻辑和之前的一样
+     * @param {*} expOrFn
+     * @param {*} cb
+     * @param {*} options
+     */
     Vue.prototype.$watch = function (
       expOrFn,
       cb,
@@ -5375,13 +5411,13 @@
         );
       }
       /* istanbul ignore else */
-      // 如果支持 proxy, 代理到 _renderProxy，使用场景，在开发环境中 render 函数 访问 vm 属性做校验
+      // 如果支持 proxy, 代理到 _renderProxy。使用场景：在 render 函数会用到，会进行数据的检测，如果数据没有定义在 vm 上，会报错提示
       {
         initProxy(vm);
       }
       // expose real self
       vm._self = vm;
-      // 初始化 $parent, $root, $children, $refs，组件之间建立层级关系
+      // 建立父子组件和根组件联系。初始化 $parent, $root, $children, $refs
       initLifecycle(vm);
       // 处理父组件自定义事件 @xxx，将它注册在子组件 $on 上
       initEvents(vm);
@@ -5390,6 +5426,7 @@
       // 执行 beforeCreate 生命周期钩子函数
       callHook(vm, 'beforeCreate');
       // 在data/props之前，初始化 inject，并设置其值为响应式
+      // provide 如果传递的是响应式值，那么 inject 值也是响应式，inject 会对它的外层做响应式处理
       initInjections(vm); // resolve injections before data/props
       // 构建响应式系统, 初始化 props, methods, data, computed, watch
       initState(vm);
@@ -6942,7 +6979,7 @@
     return function patch (oldVnode, vnode, hydrating, removeOnly) {
       // 没有新节点
       if (isUndef(vnode)) {
-        // 有旧节点，删除操作
+        // 没新节点，有旧节点，删除节点
         if (isDef(oldVnode)) { invokeDestroyHook(oldVnode); }
         return
       }

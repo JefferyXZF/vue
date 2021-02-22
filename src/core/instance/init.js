@@ -44,7 +44,7 @@ export function  initMixin (Vue: Class<Component>) {
       )
     }
     /* istanbul ignore else */
-    // 如果支持 proxy, 代理到 _renderProxy，使用场景，在开发环境中 render 函数 访问 vm 属性做校验
+    // 如果支持 proxy, 代理到 _renderProxy。使用场景：在 render 函数会用到，会进行数据的检测，如果数据没有定义在 vm 上，会报错提示
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm)
     } else {
@@ -52,7 +52,7 @@ export function  initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    // 初始化 $parent, $root, $children, $refs，组件之间建立层级关系
+    // 建立父子组件和根组件联系。初始化 $parent, $root, $children, $refs
     initLifecycle(vm)
     // 处理父组件自定义事件 @xxx，将它注册在子组件 $on 上
     initEvents(vm)
@@ -61,6 +61,7 @@ export function  initMixin (Vue: Class<Component>) {
     // 执行 beforeCreate 生命周期钩子函数
     callHook(vm, 'beforeCreate')
     // 在data/props之前，初始化 inject，并设置其值为响应式
+    // provide 如果传递的是响应式值，那么 inject 值也是响应式，inject 会对它的外层做响应式处理
     initInjections(vm) // resolve injections before data/props
     // 构建响应式系统, 初始化 props, methods, data, computed, watch
     initState(vm)
