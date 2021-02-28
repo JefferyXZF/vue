@@ -9,6 +9,7 @@
 
   <div id="app">
     <p>计数 {{ num }}</p><button @click="change">add</button>
+    <p> {{ computedNum }}</p>
   </div>
 
 
@@ -16,13 +17,28 @@
   <script>
     debugger
     var app = new Vue({
-    // app initial state
     data: {
       num: 0,
+    },
+    computed: {
+      computedNum: {
+        get () {
+          return this.num + 2
+        },
+        set (newa) {
+          console.log(newa)
+        }
+      }
+    },
+    watch: {
+      num (value) {
+        console.log(value)
+      }
     },
     methods: {
       change () {
         this.num++
+        this.computedNum++
       }
     },
     
