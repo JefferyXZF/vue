@@ -1,22 +1,33 @@
 
 
-// eslint-disable-next-line no-undef
+debugger
 var app = new Vue({
-  // app initial state
+  template: `
+  <div>
+    <!-- <h1> {{hello}}</h1> -->
+    <h1> 计算：{{num}}</h1>
+    <button @click="changeNum" id="changeNum">num * 2</button>
+    <h1>自动计算结果： {{computedNum}}</h1>
+    </div>
+    `,
   data: {
-    num: 0
+    num: 1,
   },
-  watch: {
-    num (newVal, oldVal) {
-      console.log(`watch 新值：${newVal}, 旧值：${oldVal}`)
+  computed: {
+    computedNum () {
+      return this.num * 2
     }
   },
-  computedNum () {
-    return this.num + 1
+  // watch: {
+  //   num (newVal, oldVal) {
+  //     console.log('watch: ', newVal, oldVal)
+  //   }
+  // },
+  methods: {
+    changeNum () {
+      this.num++
+    }
   }
-})
+  })
 
-console.log(app.$options)
-// mount
-// app.$mount('body')
-// app.$mount('.todoapp')
+app.$mount('#app')
