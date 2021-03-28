@@ -65,6 +65,7 @@ export function parseHTML (html, options) {
       let textEnd = html.indexOf('<')
       if (textEnd === 0) {
         // Comment:
+        // 如果第一个字符串是‘<’，则判断是否是注释节点
         if (comment.test(html)) {
           const commentEnd = html.indexOf('-->')
 
@@ -78,6 +79,7 @@ export function parseHTML (html, options) {
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        // conditionalComment = /^<!\[/ 处理条件注释标签，如 <!--[if IE 6]>，最终直接去掉
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
 
@@ -87,25 +89,27 @@ export function parseHTML (html, options) {
           }
         }
 
-        // Doctype:
+        // Doctype = /^<!DOCTYPE [^>]+>/i 处理文档节点标签 <!Doctype>
         const doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
           advance(doctypeMatch[0].length)
           continue
         }
 
-        // End tag:
+        // End tag: 处理结束标签，如 </div>
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
           advance(endTagMatch[0].length)
+          // 对结束标签做处理
           parseEndTag(endTagMatch[1], curIndex, index)
           continue
         }
 
-        // Start tag:
+        // Start tag: 处理开始标签，如 <div>
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
+          // 对开始标签做处理
           handleStartTag(startTagMatch)
           if (shouldIgnoreFirstNewline(startTagMatch.tagName, html)) {
             advance(1)
@@ -140,6 +144,7 @@ export function parseHTML (html, options) {
         advance(text.length)
       }
 
+      // 对文本做处理
       if (options.chars && text) {
         options.chars(text, index - text.length, index)
       }
@@ -167,6 +172,7 @@ export function parseHTML (html, options) {
       parseEndTag(stackedTag, index - endTagLength, index)
     }
 
+    // 剩下都是文本字符串，没有结束标签
     if (html === last) {
       options.chars && options.chars(html)
       if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {

@@ -32,6 +32,7 @@ const strats = config.optionMergeStrategies
  * Options with restrictions
  */
 if (process.env.NODE_ENV !== 'production') {
+  // 只能在根实例中使用
   strats.el = strats.propsData = function (parent, child, vm, key) {
     if (!vm) {
       warn(

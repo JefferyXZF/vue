@@ -29,7 +29,7 @@ Vue.prototype.$mount = function (
   hydrating?: boolean // 是否是服务端渲染
 ): Component {
   
-  // 查询挂载的 DOM 节点
+  // query 用 document.querySelect 来查找 DOM
   el = el && query(el) 
 
   /* istanbul ignore if */
@@ -51,7 +51,9 @@ Vue.prototype.$mount = function (
     if (template) {
       // 针对字符串模板和选择符匹配模板
       if (typeof template === 'string') {
+        // template 是 dom 元素的 id 属性
         if (template.charAt(0) === '#') {
+           // idToTemplate 函数取 template 的字符串内容，并且根据 id 缓存下来
           template = idToTemplate(template)
           /* istanbul ignore if */
           if (process.env.NODE_ENV !== 'production' && !template) {
@@ -85,7 +87,9 @@ Vue.prototype.$mount = function (
       // 使用了闭包和函数柯里化、缓存
       const { render, staticRenderFns } = compileToFunctions(template, {
         outputSourceRange: process.env.NODE_ENV !== 'production',
+        // boolean 值，IE在属性值中编码换行，而其他浏览器则不编码换行
         shouldDecodeNewlines,
+        // boolean 值，是否编码 a 标签 href 属性中的换行
         shouldDecodeNewlinesForHref,
         delimiters: options.delimiters, // 改变纯文本插入分隔符，当不传递值时，Vue默认的分隔符为 {{}}
         comments: options.comments //  当设为 true 时，将会保留且渲染模板中的 HTML注释。默认行为是舍弃它们

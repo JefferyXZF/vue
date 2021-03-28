@@ -103,6 +103,7 @@ export function parse (
   let inPre = false
   let warned = false
 
+  // 警告函数
   function warnOnce (msg, range) {
     if (!warned) {
       warned = true
@@ -110,7 +111,9 @@ export function parse (
     }
   }
 
+  // 标签解析结束的处理
   function closeElement (element) {
+    // 去除结束的空字符串
     trimEndingWhitespace(element)
     if (!inVPre && !element.processed) {
       element = processElement(element, options)
@@ -170,6 +173,7 @@ export function parse (
     }
   }
 
+  // 去除结束的空字符串
   function trimEndingWhitespace (el) {
     // remove trailing whitespace node
     if (!inPre) {
@@ -184,6 +188,7 @@ export function parse (
     }
   }
 
+  // 检查根节点的内容
   function checkRootConstraints (el) {
     if (el.tag === 'slot' || el.tag === 'template') {
       warnOnce(
@@ -210,7 +215,7 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
-    start (tag, attrs, unary, start, end) {
+    start (tag, attrs, unary, start, end) { // 解析开始标签，如：<div id="app">
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)
@@ -297,6 +302,7 @@ export function parse (
       }
     },
 
+    // 解析结束标签，如：</div>
     end (tag, start, end) {
       const element = stack[stack.length - 1]
       // pop stack
@@ -308,6 +314,7 @@ export function parse (
       closeElement(element)
     },
 
+    // 解析文本字符串
     chars (text: string, start: number, end: number) {
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
@@ -379,6 +386,7 @@ export function parse (
         }
       }
     },
+    // 解析注释节点，如：<!-- 注释 -->
     comment (text: string, start, end) {
       // adding anything as a sibling to the root node is forbidden
       // comments should still be allowed, but ignored
@@ -755,16 +763,17 @@ function processComponent (el) {
   }
 }
 
+// 处理模板属性
 function processAttrs (el) {
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, syncGen, isDynamic
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name
     value = list[i].value
-    if (dirRE.test(name)) {
+    if (dirRE.test(name)) { // 针对指令的属性处理
       // mark element as dynamic
       el.hasBindings = true
-      // modifiers
+      // modifiers 解析修饰符
       modifiers = parseModifiers(name.replace(dirRE, ''))
       // support .foo shorthand syntax for the .prop modifier
       if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
@@ -773,7 +782,7 @@ function processAttrs (el) {
       } else if (modifiers) {
         name = name.replace(modifierRE, '')
       }
-      if (bindRE.test(name)) { // v-bind
+      if (bindRE.test(name)) { // v-bind 分支
         name = name.replace(bindRE, '')
         value = parseFilters(value)
         isDynamic = dynamicArgRE.test(name)
@@ -847,8 +856,9 @@ function processAttrs (el) {
         if (isDynamic) {
           name = name.slice(1, -1)
         }
+        // 添加events属性
         addHandler(el, name, value, modifiers, false, warn, list[i], isDynamic)
-      } else { // normal directives
+      } else { // normal directives 除了v-bind，v-on之外的普通指令
         name = name.replace(dirRE, '')
         // parse arg
         const argMatch = name.match(argRE)
@@ -861,6 +871,7 @@ function processAttrs (el) {
             isDynamic = true
           }
         }
+        // 普通指令会在AST树上添加directives属性
         addDirective(el, name, rawName, value, arg, isDynamic, modifiers, list[i])
         if (process.env.NODE_ENV !== 'production' && name === 'model') {
           checkForAliasModel(el, value)
@@ -880,6 +891,7 @@ function processAttrs (el) {
           )
         }
       }
+      // 普通html标签属性
       addAttr(el, name, JSON.stringify(value), list[i])
       // #6887 firefox doesn't update muted state if set via attribute
       // even immediately after element creation

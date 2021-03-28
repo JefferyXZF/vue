@@ -5,6 +5,7 @@ import { isSVG } from 'web/util/index'
 
 let svgContainer
 
+// domProps更新input标签的value值;
 function updateDOMProps (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.domProps) && isUndef(vnode.data.domProps)) {
     return

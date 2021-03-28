@@ -26,6 +26,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     options?: CompilerOptions,
     vm?: Component
   ): CompiledFunctionResult {
+    // 合并用户参数 options 和 默认参数 baseOptions 到 finalOptions
     options = extend({}, options)
     const warn = options.warn || baseWarn
     delete options.warn

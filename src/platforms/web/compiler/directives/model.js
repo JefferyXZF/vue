@@ -34,6 +34,7 @@ export default function model (
     }
   }
 
+  //组件上v-model的处理
   if (el.component) {
     genComponentModel(el, value, modifiers)
     // component v-model doesn't need extra runtime
@@ -146,6 +147,7 @@ function genDefaultModel (
     }
   }
 
+  // lazy,trim,number是可供v-model使用的修饰符
   const { lazy, number, trim } = modifiers || {}
   const needCompositionGuard = !lazy && type !== 'range'
   const event = lazy
@@ -162,12 +164,16 @@ function genDefaultModel (
     valueExpression = `_n(${valueExpression})`
   }
 
+  // genAssignmentCode函数是为了处理v-model的格式，允许使用以下的形式： v-model="a.b" v-model="a[b]"
   let code = genAssignmentCode(value, valueExpression)
   if (needCompositionGuard) {
+    //  保证了不会在输入法组合文字过程中得到更新
     code = `if($event.target.composing)return;${code}`
   }
 
+  //  添加props的value属性
   addProp(el, 'value', `(${value})`)
+  // 添加事件
   addHandler(el, event, code, null, true)
   if (trim || number) {
     addHandler(el, 'blur', '$forceUpdate()')

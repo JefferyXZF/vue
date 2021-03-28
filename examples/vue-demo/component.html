@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>组件化</title>
+</head>
+<body>
+
+  <div id="app">
+
+  </div>
+
+
+  <script src="../../dist/vue.js"></script>
+  <script>
+    debugger
+
+// 全局注册
+Vue.component('my-test', {
+  template: '<div>{{test}}</div>',
+  data () {
+      return {
+          test: 'hello world'
+      }
+  }
+})
+
+// 局部注册
+// var myTest = {
+//     template: '<div>{{test}}</div>',
+//     data () {
+//         return {
+//             test: 1212
+//         }
+//     }
+// }
+
+// 函数组件
+// Vue.component('my-test', {
+//   functional: true,
+//   render (h) {
+
+//     return h(
+//       'h1', 'Hello world'
+//     )
+//   }
+// })
+
+var app = new Vue({
+  template: '<div><my-test></my-test></div>'
+})
+
+  // 挂载
+  app.$mount('#app')
+  </script>
+</body>
+</html>
