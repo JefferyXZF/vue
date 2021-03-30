@@ -12,7 +12,7 @@ export const createCompiler = createCompilerCreator(function baseCompile (
   template: string,
   options: CompilerOptions
 ): CompiledResult {
-  // 转化为 AST 抽象语法树
+  // 解析函数，将模版字符串解析为 AST
   const ast = parse(template.trim(), options)
   // 代码优化
   if (options.optimize !== false) {

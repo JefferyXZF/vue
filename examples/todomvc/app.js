@@ -1,11 +1,10 @@
 
 // app Vue instance
+debugger
 var app = new Vue({
   // app initial state
   data: {
-    newTodo: '',
-    editedTodo: null,
-    visibility: 'all'
+    msg: 'hello world'
   },
 })
 

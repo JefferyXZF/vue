@@ -59,8 +59,9 @@ export function createCompilerCreator (baseCompile: Function): Function {
 
       finalOptions.warn = warn
 
-      // 编译
+      // 核心函数，在这里调用编译返回 render 字符串
       const compiled = baseCompile(template.trim(), finalOptions)
+
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)
       }

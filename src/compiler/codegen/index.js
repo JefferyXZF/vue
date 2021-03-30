@@ -221,6 +221,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
 
   // directives first.
   // directives may mutate the el's other properties before they are generated.
+  // 指令的处理
   const dirs = genDirectives(el, state)
   if (dirs) data += dirs + ','
 
@@ -252,10 +253,12 @@ export function genData (el: ASTElement, state: CodegenState): string {
     data += `attrs:${genProps(el.attrs)},`
   }
   // DOM props
+  // 处理 props
   if (el.props) {
     data += `domProps:${genProps(el.props)},`
   }
   // event handlers
+  // 处理事件
   if (el.events) {
     data += `${genHandlers(el.events, false)},`
   }
@@ -272,6 +275,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
     data += `${genScopedSlots(el, el.scopedSlots, state)},`
   }
   // component v-model
+  // 针对组件的v-model处理
   if (el.model) {
     data += `model:{value:${
       el.model.value
@@ -315,6 +319,7 @@ function genDirectives (el: ASTElement, state: CodegenState): string | void {
   for (i = 0, l = dirs.length; i < l; i++) {
     dir = dirs[i]
     needRuntime = true
+    // 对指令ast树的重新处理 v-model => name = mode, 拿到 state.directives.model 函数
     const gen: DirectiveFunction = state.directives[dir.name]
     if (gen) {
       // compile-time directive that manipulates AST.

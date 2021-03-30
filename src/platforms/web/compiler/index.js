@@ -1,5 +1,6 @@
 /* @flow */
 
+// Web 平台的参数 baseOptions
 import { baseOptions } from './options'
 import { createCompiler } from 'compiler/index'
 
