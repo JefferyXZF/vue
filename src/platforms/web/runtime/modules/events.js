@@ -102,6 +102,7 @@ function remove (
   )
 }
 
+// 在 patch 过程中的创建阶段和更新阶段都会执行 updateDOMListeners
 function updateDOMListeners (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   if (isUndef(oldVnode.data.on) && isUndef(vnode.data.on)) {
     return
@@ -109,6 +110,7 @@ function updateDOMListeners (oldVnode: VNodeWithData, vnode: VNodeWithData) {
   const on = vnode.data.on || {}
   const oldOn = oldVnode.data.on || {}
   target = vnode.elm
+  // 对 v-model 相关的处理
   normalizeEvents(on)
   updateListeners(on, oldOn, add, remove, createOnceHandler, vnode.context)
   target = undefined
