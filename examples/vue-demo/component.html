@@ -14,62 +14,40 @@
 
   <script src="../../dist/vue.js"></script>
   <script>
-    // debugger
-const value = import('./test.js')
-console.log(value)
+    debugger
+
 // 全局注册
-// Vue.component('my-test', {
-//   template: `<div>
-//     <div>父：{{msg}}</div>
-//     <div>{{test}}</div>
-//     <button @click="changeMsg">child button</button>
-//     </div>`,
-//   data () {
-//       return {
-//           test: 'hello world'
-//       }
-//   },
-//   props: {
-//     msg: String
-//   },
-//   methods: {
-//     changeMsg () {
-//       this.$emit('change', this.test += 22)
-//     }
-//   },
-// })
+Vue.component('my-test', {
+  template: `<div>全局注册组件</div>`
+})
 
 // 局部注册
-var myTest = {
-    template: '<div>{{test}}</div>',
-    data () {
-        return {
-            test: 1212
-        }
-    }
+var myChild = {
+    template: '<div>局部注册组件</div>'
 }
 
 // 函数组件
-Vue.component('my-test', {
-  functional: true,
-  render (h) {
+// Vue.component('my-test', {
+//   functional: true,
+//   render (h) {
 
-    return h(myTest)
-  }
-})
+//     return h(myTest)
+//   }
+// })
 
 // 异步组件
+// const value = import('./test.js')
+// console.log(value)
 // Vue.component('my-test', () => import('./test.js'))
 
 var app = new Vue({
   template: `<div>
-    <my-test msg="parent" @change="getValue"></my-test>
+    <my-test></my-test>
+    <my-child></my-child>
   </div>`,
-  methods: {
-    getValue (value) {
-      console.log('parent', value)
-    }
-  },
+  components: {
+    myChild
+  }
 })
 
   // 挂载
