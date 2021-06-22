@@ -51,7 +51,14 @@ export class Observer {
     // __ob__ 主要有两个作用，一方面是为了标记数据是否被侦测了变化（保证同一个数据只被侦测一次），另一方面可以很方便地通过数据取到_ob__，从而拿到 observer实例上保存的依赖。当拦截到数组发生变化时，向依赖发送通知。除了侦测数组自身的变化外，数组中元素发生的变化也要侦测
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
-      // 重写数组原型方法
+      /**
+       * value 为数组
+       * hasProto = '__proto__' in {}
+       * 用于判断对象是否存在 __proto__ 属性，通过 obj.__proto__ 可以访问对象的原型链
+       * 但由于 __proto__ 不是标准属性，所以有些浏览器不支持，比如 IE6-10，Opera10.1
+       * 为什么要判断，是因为一会儿要通过 __proto__ 操作数据的原型链
+       * 覆盖数组默认的七个原型方法，以实现数组响应式
+       */
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
@@ -166,16 +173,25 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-  // 这一部分的逻辑是针对深层次的对象，如果对象的属性是一个对象，则会递归调用实例化Observe类，让其属性值也转换为响应式对象
+  // 递归调用，处理 val 即 obj[key] 的值为对象的情况，保证对象中的所有 key 都被观察
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      /**
+       * Dep.target 为 Dep 类的一个静态属性，值为 watcher，在实例化 Watcher 时会被设置
+       * 实例化 Watcher 时会执行 new Watcher 时传递的回调函数（computed 除外，因为它懒执行）
+       * 而回调函数中如果有 vm.key 的读取行为，则会触发这里的 读取 拦截，进行依赖收集
+       * 回调函数执行完以后又会将 Dep.target 设置为 null，避免这里重复收集依赖
+       */
       if (Dep.target) {
-        dep.depend() // 依赖收集，为当前watcher添加dep数据
+        // 依赖收集，在 dep 中添加 watcher，也在 watcher 中添加 dep
+        dep.depend()
+        // childOb 表示对象中嵌套对象的观察者对象，如果存在也对其进行依赖收集
         if (childOb) {
+            // 这就是 this.key.chidlKey 被更新时能触发响应式更新的原因
           childOb.dep.depend() // 嵌套对象、数组类型，添加依赖收集
           if (Array.isArray(value)) { // 数组类型，对每一项做依赖收集
             dependArray(value)
@@ -286,6 +302,10 @@ export function del (target: Array<any> | Object, key: any) {
 /**
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
+ */
+/**
+ * 遍历每个数组元素，递归处理数组项为对象的情况，为其添加依赖
+ * 因为前面的递归阶段无法为数组中的对象元素添加依赖
  */
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {

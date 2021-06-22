@@ -18,13 +18,39 @@
 
 // 全局注册
 Vue.component('my-test', {
-  template: '<div>{{test}}</div>',
+  template: `<div>
+    {{test}}: {{ msg }}
+    <button @click="handle">按钮</button>
+  </div>`,
+  props: {
+    msg: String
+  },
   data () {
       return {
           test: 'hello world'
       }
+  },
+  methods: {
+    handle () {
+      this.test += '111'
+      this.$emit('change', this.test)
+    }
   }
 })
+// 全局注册：
+// Vue.component('asyncComponent', function(resolve, reject) {
+//   require(['./test.vue'], resolve)
+// })
+// // 局部注册：
+// var vm = new Vue({
+//   el: '#app',
+//   template: '<div id="app"><asyncComponent></asyncComponent></div>',
+//   components: {
+//     asyncComponent: (resolve, reject) => require(['./test.vue'], resolve),
+//     // 另外写法
+//     asyncComponent: () => import('./test.vue'),
+//   }
+// })
 
 // 局部注册
 // var myTest = {
@@ -48,7 +74,24 @@ Vue.component('my-test', {
 // })
 
 var app = new Vue({
-  template: '<div><my-test></my-test></div>'
+  template: `<div>
+    {{parent}}
+    <my-test 
+      msg="parent"
+      @change="change"
+    />
+    </div>`
+    ,
+    data () {
+      return {
+        parent: 'parent'
+      }
+    },
+    methods: {
+      change (value) {
+        this.parent += value
+      }
+    },
 })
 
   // 挂载

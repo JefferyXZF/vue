@@ -50,6 +50,7 @@ export function initLifecycle (vm: Component) {
 
   // render watch (渲染 Watch)
   vm._watcher = null
+  // 和 keep-alive 缓存处理相关
   vm._inactive = null
   vm._directInactive = false
   // 是否已经挂载

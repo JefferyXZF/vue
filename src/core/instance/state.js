@@ -45,25 +45,49 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+/**
+ * 两件事：
+ *   数据响应式的入口：分别处理 props、methods、data、computed、watch
+ *   优先级：props、methods、data、computed 对象中的属性不能出现重复，优先级和列出顺序一致
+ *         其中 computed 中的 key 不能和 props、data 中的 key 重复，methods 不影响
+ */
 export function initState (vm: Component) {
   vm._watchers = []
   const opts = vm.$options
-  if (opts.props) initProps(vm, opts.props) //  设置 props 为响应式，并代理
-  if (opts.methods) initMethods(vm, opts.methods) // 将 methods 方法挂载在vm上
-  // 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
+   // 处理 props 对象，为 props 对象的每个属性设置响应式，并将其代理到 vm 实例上
+  if (opts.props) initProps(vm, opts.props)
+  // 处理 methos 对象，校验每个属性的值是否为函数、和 props 属性比对进行判重处理，最后得到 vm[key] = methods[key]
+  if (opts.methods) initMethods(vm, opts.methods)
+  /**
+   * 做了三件事
+   *   1、判重处理，data 对象上的属性不能和 props、methods 对象上的属性相同
+   *   2、代理 data 对象上的属性到 vm 实例
+   *   3、为 data 对象的上数据设置响应式 
+   */
   if (opts.data) {
     initData(vm)
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
+  /**
+   * 三件事：
+   *   1、为 computed[key] 创建 watcher 实例，默认是懒执行
+   *   2、代理 computed[key] 到 vm 实例
+   *   3、判重，computed 中的 key 不能和 data、props 中的属性重复
+   */
   if (opts.computed) initComputed(vm, opts.computed) // 初始化 computed 的 get 和 set 方法
-  // 初始化 watch
+  /**
+   * 三件事：
+   *   1、处理 watch 对象
+   *   2、为 每个 watch.key 创建 watcher 实例，key 和 watcher 实例可能是 一对多 的关系
+   *   3、如果设置了 immediate，则立即执行 回调函数
+   */
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
 }
 /**
- * @description 实现流程：
+ * @description 实现：处理 props 对象，为 props 对象的每个属性设置响应式，并将其代理到 vm 实例上
  * 1、检验props的key, 取得 value 值（不会对接收父组件的嵌套对象做响应式处理，因为父组件在内层已经实现了响应式。不过会对 props 的 default 默认值做嵌套的响应式处理）
  * 2、defineReactive 定义响应式对象
  * 3、将 props 的key代理到 vm
@@ -292,10 +316,23 @@ export function defineComputed (
 }
 
 function createComputedGetter (key) {
+  // computed 属性值会缓存的原理也是在这里结合 watcher.dirty、watcher.evalaute、watcher.update 实现的
   return function computedGetter () {
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
       // dirty是标志是否已经执行过计算结果，如果执行过则不会执行watcher.evaluate重复计算，这也是缓存的原理
+       // 计算 key 对应的值，通过执行 computed.key 的回调函数来得到
+      // watcher.dirty 属性就是大家常说的 computed 计算结果会缓存的原理
+      // <template>
+      //   <div>{{ computedProperty }}</div>
+      //   <div>{{ computedProperty }}</div>
+      // </template>
+      // 像这种情况下，在页面的一次渲染中，两个 dom 中的 computedProperty 只有第一个
+      // 会执行 computed.computedProperty 的回调函数计算实际的值，
+      // 即执行 watcher.evalaute，而第二个就不走计算过程了，
+      // 因为上一次执行 watcher.evalute 时把 watcher.dirty 置为了 false，
+      // 待页面更新后，wathcer.update 方法会将 watcher.dirty 重新置为 true，
+      // 供下次页面更新时重新计算 computed.key 的结果
       if (watcher.dirty) {
         watcher.evaluate()
       }
@@ -356,6 +393,28 @@ function initMethods (vm: Component, methods: Object) {
   }
 }
 
+/**
+ * 处理 watch 对象的入口，做了两件事：
+ *   1、遍历 watch 对象
+ *   2、调用 createWatcher 函数
+ * @param {*} watch = {
+ *   'key1': function(val, oldVal) {},
+ *   'key2': 'this.methodName',
+ *   'key3': {
+ *     handler: function(val, oldVal) {},
+ *     deep: true
+ *   },
+ *   'key4': [
+ *     'this.methodNanme',
+ *     function handler1() {},
+ *     {
+ *       handler: function() {},
+ *       immediate: true
+ *     }
+ *   ],
+ *   'key.key5' { ... }
+ * }
+ */
 /**
  * @description 遍历 watch，判断是否是数组，为每一个watch创建createWatcher
  * @author jeffery
@@ -436,6 +495,18 @@ export function stateMixin (Vue: Class<Component>) {
    * @param {*} cb
    * @param {*} options
    */
+  /**
+ * 创建 watcher，返回 unwatch，共完成如下 5 件事：
+ *   1、兼容性处理，保证最后 new Watcher 时的 cb 为函数
+ *   2、标示用户 watcher
+ *   3、创建 watcher 实例
+ *   4、如果设置了 immediate，则立即执行一次 cb
+ *   5、返回 unwatch
+ * @param {*} expOrFn key
+ * @param {*} cb 回调函数
+ * @param {*} options 配置项，用户直接调用 this.$watch 时可能会传递一个 配置项
+ * @returns 返回 unwatch 函数，用于取消 watch 监听
+ */
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,
