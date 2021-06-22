@@ -124,6 +124,7 @@ export function addHandler (
   }
 
   let events
+  // modifier.native 判断是一个纯原生事件还是普通事件
   if (modifiers.native) {
     delete modifiers.native
     events = el.nativeEvents || (el.nativeEvents = {})

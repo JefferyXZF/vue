@@ -16,21 +16,6 @@ function proxy (target, sourceKey, key) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
-const defaultTagRE = /\{\{(\w+?)\}\}/g
-
-function parseText (vm, html) {
-  const tagRE = defaultTagRE
-  if (!tagRE.test(html)) {
-    return
-  }
-
-  let match
-  while ((match = tagRE.exec(html))) {
-    html = html.replace(match[0], vm[match[1]])
-  }
-  return html
-}
-
 
 class Vue {
   constructor(options) {
@@ -48,44 +33,51 @@ class Vue {
   }
 
   initState(vm) {
-    vm._watchers = []
-    const opts = vm.$options
-    // 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
-    if (opts.data) {
-      initData(vm)
-    } else {
-      observe(vm._data = {})
-    }
+      // vm._watchers = []
+      const opts = vm.$options
+      // 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
+      if (opts.data) {
+        initData(vm)
+      } else {
+        observe(vm._data = {})
+      }
 
-    // 初始化 computed
-    if (opts.computed) {
-      initComputed(vm, opts.computed)
-    }
-    // 初始化 watch
-    if (opts.watch) {
-      initWatch(vm, opts.watch)
-    }
+      if (opts.methods) initMethods(vm, opts.methods)
+
+      // 初始化 computed
+      if (opts.computed) initComputed(vm, opts.computed)
+
+      // 初始化 watch
+      if (opts.watch) initWatch(vm, opts.watch)
+
     }
 
     // 对外暴露调用订阅者的接口，内部主要在指令中使用订阅者
     $watch(expOrFn, cb, options) {
-      const watcher = new Watcher(this, expOrFn, cb, {user: true});
+      const vm = this
+      options = options || {}
+      options.user = true
+      const watcher = new Watcher(this, expOrFn, cb, options);
       // 立即执行
       if (options.immediate) {
         try {
-          cb.call(this, watcher.val)
+          cb.call(vm, watcher.val)
         } catch (error) {
           console.error(`callback for immediate watcher "${watcher.expression}"`)
         }
       }
-      
+      // 取消监听
+      return function unwatchFn () {
+        watcher.teardown()
+      }
+
     }
 
     $mount(el) {
       // 直接改写innerHTML
       const vm = this
       let innerHtml = el && document.querySelector(el)
-      
+
       const updateComponent = () => {
         if (innerHtml) {
           let template = ''
@@ -93,13 +85,13 @@ class Vue {
             template = this.$options.template
           }
           innerHtml = compileText(this, template)
-          
+
           document.querySelector(el).innerHTML = innerHtml
 
           setTimeout(() => {
-            document.querySelector('#change').addEventListener('click', () => {
+            document.querySelector('#changeNum').addEventListener('click', () => {
               console.log('333')
-              vm.age = vm.age + 1
+              vm['changeNum']()
             })
           }, 0)
         }
@@ -113,8 +105,18 @@ class Vue {
     }
   }
 
+  const defaultTagRE = /\{\{(\w+?)\}\}/g
+
   function compileText (vm, html) {
-    html = parseText(vm, html)
+    const tagRE = defaultTagRE
+    if (!tagRE.test(html)) {
+      return
+    }
+
+    let match
+    while ((match = tagRE.exec(html))) {
+      html = html.replace(match[0], vm[match[1]])
+    }
     return html
   }
 
@@ -136,6 +138,12 @@ function initData(vm) {
     proxy(vm, `_data`, key)
   }
   observe(data)
+}
+
+function initMethods(vm, methods) {
+  for (const key in methods) {
+    vm[key] = typeof methods[key] !== 'function' ? noop : methods[key].bind(vm)
+  }
 }
 
 const computedWatcherOptions = { lazy: true }
@@ -184,7 +192,7 @@ function defineComputed (
 
   sharedPropertyDefinition.get = createComputedGetter(key)
   sharedPropertyDefinition.set = noop
-  
+
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
@@ -264,7 +272,7 @@ class Dep {
       Dep.target.addDep(this);
     }
   }
-  
+
   notify() {
     // 通知所有的订阅者(Watcher)
     this.subs.forEach(sub => sub.update());
@@ -290,7 +298,6 @@ function parsePath (path) {
  */
 class Watcher {
   constructor(vm, expOrFn, cb, options, isRenderWatcher) {
-    this.depIds = {}; // hash储存订阅者的id,避免重复的订阅者
     this.vm = vm; // 被订阅的数据一定来自于当前Vue实例
     if (isRenderWatcher) {
       this.vm._watcher = isRenderWatcher
@@ -305,25 +312,28 @@ class Watcher {
     }
     this.cb = cb
     this.dirty = this.lazy
+    this.depIds = new Set(); // hash储存订阅者的id,避免重复的订阅者
     this.deps = []
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn; // 当数据更新时想要做的事情
     } else {
       this.getter = parsePath(expOrFn)
     }
-    
-    this.val = this.get(); // 维护更新之前的数据
+    // computed watcher 不执行get
+    this.val = this.lazy ? undefined : this.get()
   }
+
   // 对外暴露的接口，用于在订阅的数据被更新时，由订阅者管理员(Dep)调用
   update() {
     this.run();
   }
+
   addDep(dep) {
     // 如果在depIds的hash中没有当前的id,可以判断是新Watcher,因此可以添加到dep的数组中储存
     // 此判断是避免同id的Watcher被多次储存
-    if (!this.depIds.hasOwnProperty(dep.id)) {
-      //   console.log(this.depIds,dep.id);
-      this.depIds[dep.id] = dep;
+    const id = dep.id
+    if (!this.depIds.has(id)) {
+      this.depIds.add(id)
       this.deps.push(dep)
 
       dep.addSub(this);
@@ -333,15 +343,17 @@ class Watcher {
         return;
     }
   }
+
   run() {
     const val = this.get();
-  
+
     if (val !== this.val) {
       const oldVal = this.val
       this.val = val;
       this.cb.call(this.vm, val, oldVal);
     }
   }
+
   get() {
     // 当前订阅者(Watcher)读取被订阅数据的最新更新后的值时，通知订阅者管理员收集当前订阅者
     pushTarget(this)
@@ -369,6 +381,22 @@ class Watcher {
     let i = this.deps.length
     while (i--) {
       this.deps[i].depend()
+    }
+  }
+
+  teardown () {
+    if (this.active) {
+      // remove self from vm's watcher list
+      // this is a somewhat expensive operation so we skip it
+      // if the vm is being destroyed.
+      // if (!this.vm._isBeingDestroyed) {
+      //   remove(this.vm._watchers, this)
+      // }
+      // let i = this.deps.length
+      // while (i--) {
+      //   this.deps[i].removeSub(this)
+      // }
+      // this.active = false
     }
   }
 }
@@ -440,33 +468,7 @@ function observe(value) {
 }
 
 
+(function(global, factory) {
+  global && (global = factory)
+})(this, Vue)
 
-
-let vm = new Vue({
-  data: {
-    hello: 'hello world',
-    age:222,
-    sex: '22'
-  },
-  template: `
-    <!-- <h1> {{hello}}</h1> -->
-    <h1> {{showAge}}</h1>
-    <h1> {{sex}}</h1>
-    <button id="change">change</button>
-  `,
-  watch: {
-    age: {
-      handler: function (newVal, oldVal) {
-        console.log(newVal, oldVal)
-      },
-      immediate: true
-    }
-  },
-  computed: {
-    showAge() {
-      return '年龄是' + this.age
-    }
-  }
-});
-
-vm.$mount('#app')

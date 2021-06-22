@@ -35,7 +35,7 @@ debugger
 //   components: {
 //     componentDemo
 //   }
-  
+
 // }).$mount('#app')
 
 // mount
@@ -46,6 +46,7 @@ new Vue({
   el: '#app',
   template: `
   <h1>
+    <input type="text" v-model="msg" />
     {{ msg }}
   </h1>
   `,
