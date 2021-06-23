@@ -215,7 +215,8 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
-    start (tag, attrs, unary, start, end) { // 解析开始标签，如：<div id="app">
+    // 解析开始标签，如：<div id="app">
+    start (tag, attrs, unary, start, end) { 
       // check namespace.
       // inherit parent ns if there is one
       const ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag)

@@ -101,7 +101,7 @@ export default class Watcher {
    */
   /**
    * 执行 this.getter，并重新收集依赖
-   * this.getter 是实例化 watcher 时传递的第二个参数，一个函数或者字符串，比如：updateComponent 或者 parsePath 返回的函数
+   * this.getter 是实例化 watcher 时传递的第二个参数，一个函数或者字符串，比如：updateComponent 或者 parsePath 返回的读取 this.xx 属性值的函数
    * 为什么要重新收集依赖？
    *   因为触发更新说明有响应式数据被更新了，但是被更新的数据虽然已经经过 observe 观察了，但是却没有进行依赖收集，
    *   所以，在更新页面时，会重新执行一次 render 函数，执行期间会触发读取操作，这时候进行依赖收集
@@ -239,6 +239,15 @@ export default class Watcher {
    * This only gets called for lazy watchers.
    * 专门给 computed watch 使用，只调用一次，实现缓存的原理
    */
+  /**
+   * 懒执行的 watcher 会调用该方法
+   *   比如：computed，在获取 vm.computedProperty 的值时会调用该方法
+   * 然后执行 this.get，即 watcher 的回调函数，得到返回值
+   * this.dirty 被置为 false，作用是页面在本次渲染中只会一次 computed.key 的回调函数，
+   *   这也是大家常说的 computed 和 methods 区别之一是 computed 有缓存的原理所在
+   * 而页面更新后会 this.dirty 会被重新置为 true，这一步是在 this.update 方法中完成的
+   */
+
   evaluate () {
     this.value = this.get()
     this.dirty = false

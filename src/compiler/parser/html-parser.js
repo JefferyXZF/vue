@@ -60,6 +60,7 @@ export function parseHTML (html, options) {
   let last, lastTag
   while (html) {
     last = html
+      // 确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)
     // Make sure we're not in a plaintext content element like script/style
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
@@ -71,8 +72,10 @@ export function parseHTML (html, options) {
 
           if (commentEnd >= 0) {
             if (options.shouldKeepComment) {
+              // 若保留注释，则把注释截取出来传给options.comment，创建注释类型的AST节点
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
+            // 若不保留注释，则将游标移动到'-->'之后，继续向后解析
             advance(commentEnd + 3)
             continue
           }

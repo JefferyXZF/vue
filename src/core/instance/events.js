@@ -69,6 +69,9 @@ export function eventsMixin (Vue: Class<Component>) {
       (vm._events[event] || (vm._events[event] = [])).push(fn)
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
+      // hookEvent，提供从外部为组件实例注入声明周期方法的机会
+      // 比如从组件外部为组件的 mounted 方法注入额外的逻辑
+      // 该能力是结合 callhook 方法实现的
       if (hookRE.test(event)) {
         vm._hasHookEvent = true
       }
@@ -150,6 +153,7 @@ export function eventsMixin (Vue: Class<Component>) {
     const vm: Component = this
     if (process.env.NODE_ENV !== 'production') {
       const lowerCaseEvent = event.toLowerCase()
+      // 意思是说，HTML 属性不区分大小写，所以你不能使用 v-on 监听小驼峰形式的事件名（eventName），而应该使用连字符形式的事件名（event-name)
       if (lowerCaseEvent !== event && vm._events[lowerCaseEvent]) {
         tip(
           `Event "${lowerCaseEvent}" is emitted in component ` +
@@ -160,6 +164,7 @@ export function eventsMixin (Vue: Class<Component>) {
         )
       }
     }
+    // 从 vm._event 对象上拿到当前事件的回调函数数组，并一次调用数组中的回调函数，并且传递提供的参数
     let cbs = vm._events[event]
     if (cbs) {
       cbs = cbs.length > 1 ? toArray(cbs) : cbs

@@ -43,8 +43,11 @@ Vue.prototype.$mount = function (
 
   // $options 是在调用 _init 方法中，mergeOption 选项合并赋值
   const options = this.$options
-  // resolve template/el and convert to render function 解析 template或el成render 函数
-  // 模板执行优先级 render > template > el
+  /**
+   * 如果用户提供了 render 配置项，则直接跳过编译阶段，否则进入编译阶段
+   *   解析 template 和 el，并转换为 render 函数
+   *   优先级：render > template > el
+   */
   if (!options.render) {
     let template = options.template
     // template 值可以是 id 标识，DOM, 和 组件字符串占位符
@@ -84,8 +87,10 @@ Vue.prototype.$mount = function (
 
       // 模板编译成 render 和 staticRenderFns 函数
       // 路径：src/compiler/to-function.js
+      // 编译模版，得到 动态渲染函数和静态渲染函数
       // 使用了闭包和函数柯里化、缓存
       const { render, staticRenderFns } = compileToFunctions(template, {
+         // 在非生产环境下，编译时记录标签属性在模版字符串中开始和结束的位置索引
         outputSourceRange: process.env.NODE_ENV !== 'production',
         // boolean 值，IE在属性值中编码换行，而其他浏览器则不编码换行
         shouldDecodeNewlines,

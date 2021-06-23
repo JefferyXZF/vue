@@ -715,6 +715,11 @@
    * A dep is an observable that can have multiple
    * directives subscribing to it.
    */
+  /**
+   * 一个 dep 对应一个 obj.key
+   * 在读取响应式数据时，负责收集依赖，每个 dep（或者说 obj.key）依赖的 watcher 有哪些
+   * 在响应式数据更新时，负责通知 dep 中那些 watcher 去执行 update 方法
+   */
   var Dep = function Dep () {
     this.id = uid++;
     this.subs = [];
@@ -751,6 +756,12 @@
   // The current target watcher being evaluated.
   // This is globally unique because only one watcher
   // can be evaluated at a time.
+  /**
+   * 当前正在执行的 watcher，同一时间只会有一个 watcher 在执行
+   * Dep.target = 当前正在执行的 watcher
+   * 通过调用 pushTarget 方法完成赋值，调用 popTarget 方法完成重置（null)
+   */
+
   Dep.target = null;
   var targetStack = [];
 
@@ -860,6 +871,7 @@
    */
 
   var arrayProto = Array.prototype;
+  // 通过继承的方式创建新的 arrayMethods
   var arrayMethods = Object.create(arrayProto);
 
   var methodsToPatch = [
@@ -896,6 +908,7 @@
           inserted = args.slice(2);
           break
       }
+      // 对新插入的元素做响应式处理
       if (inserted) { ob.observeArray(inserted); }
       // notify change
       ob.dep.notify();
@@ -935,7 +948,14 @@
     // __ob__ 主要有两个作用，一方面是为了标记数据是否被侦测了变化（保证同一个数据只被侦测一次），另一方面可以很方便地通过数据取到_ob__，从而拿到 observer实例上保存的依赖。当拦截到数组发生变化时，向依赖发送通知。除了侦测数组自身的变化外，数组中元素发生的变化也要侦测
     def(value, '__ob__', this);
     if (Array.isArray(value)) {
-      // 重写数组原型方法
+      /**
+       * value 为数组
+       * hasProto = '__proto__' in {}
+       * 用于判断对象是否存在 __proto__ 属性，通过 obj.__proto__ 可以访问对象的原型链
+       * 但由于 __proto__ 不是标准属性，所以有些浏览器不支持，比如 IE6-10，Opera10.1
+       * 为什么要判断，是因为一会儿要通过 __proto__ 操作数据的原型链
+       * 覆盖数组默认的七个原型方法，以实现数组响应式
+       */
       if (hasProto) {
         protoAugment(value, arrayMethods);
       } else {
@@ -1049,16 +1069,25 @@
     if ((!getter || setter) && arguments.length === 2) {
       val = obj[key];
     }
-    // 这一部分的逻辑是针对深层次的对象，如果对象的属性是一个对象，则会递归调用实例化Observe类，让其属性值也转换为响应式对象
+    // 递归调用，处理 val 即 obj[key] 的值为对象的情况，保证对象中的所有 key 都被观察
     var childOb = !shallow && observe(val);
     Object.defineProperty(obj, key, {
       enumerable: true,
       configurable: true,
       get: function reactiveGetter () {
         var value = getter ? getter.call(obj) : val;
+        /**
+         * Dep.target 为 Dep 类的一个静态属性，值为 watcher，在实例化 Watcher 时会被设置
+         * 实例化 Watcher 时会执行 new Watcher 时传递的回调函数（computed 除外，因为它懒执行）
+         * 而回调函数中如果有 vm.key 的读取行为，则会触发这里的 读取 拦截，进行依赖收集
+         * 回调函数执行完以后又会将 Dep.target 设置为 null，避免这里重复收集依赖
+         */
         if (Dep.target) {
-          dep.depend(); // 依赖收集，为当前watcher添加dep数据
+          // 依赖收集，在 dep 中添加 watcher，也在 watcher 中添加 dep
+          dep.depend();
+          // childOb 表示对象中嵌套对象的观察者对象，如果存在也对其进行依赖收集
           if (childOb) {
+              // 这就是 this.key.chidlKey 被更新时能触发响应式更新的原因
             childOb.dep.depend(); // 嵌套对象、数组类型，添加依赖收集
             if (Array.isArray(value)) { // 数组类型，对每一项做依赖收集
               dependArray(value);
@@ -1169,6 +1198,10 @@
   /**
    * Collect dependencies on array elements when the array is touched, since
    * we cannot intercept array element access like property getters.
+   */
+  /**
+   * 遍历每个数组元素，递归处理数组项为对象的情况，为其添加依赖
+   * 因为前面的递归阶段无法为数组中的对象元素添加依赖
    */
   function dependArray (value) {
     for (var e = (void 0), i = 0, l = value.length; i < l; i++) {
@@ -1573,8 +1606,10 @@
   }
 
   /**
-   * 选项合并原则：子配置存在则取子配置，不存在则取父配置
+   * 合并两个选项，出现相同配置项时，子选项会覆盖父选项的配置
    * 1、首先 对 components, prop, inject, directive 的检验
+   * 2、递归处理 extends, mixin
+   * 3、按合并策略将两个选型合并
    * Merge two option objects into a new one.
    * Core utility used in both instantiation and inheritance.
    */
@@ -1600,6 +1635,8 @@
     // but only if it is a raw options object that isn't
     // the result of another mergeOptions call.
     // Only merged options has the _base property.
+     // 处理原始 child 对象上的 extends 和 mixins，分别执行 mergeOptions，将这些继承而来的选项合并到 parent
+    // mergeOptions 处理过的对象会含有 _base 属性
     if (!child._base) {
       if (child.extends) {
         parent = mergeOptions(parent, child.extends, vm);
@@ -1616,11 +1653,13 @@
     for (key in parent) {
       mergeField(key);
     }
+    // 遍历 子选项，如果父选项不存在该配置，则合并，否则跳过，因为父子拥有同一个属性的情况在上面处理父选项时已经处理过了，用的子选项的值
     for (key in child) {
       if (!hasOwn(parent, key)) {
         mergeField(key);
       }
     }
+    // 合并选项，childVal 优先级高于 parentVal
     function mergeField (key) {
       // 拿到各个选择指定的选项配置，如果没有则用默认的配置
       // strats下每个key对应的便是每个特殊选项的合并策略
@@ -4187,6 +4226,7 @@
 
     // render watch (渲染 Watch)
     vm._watcher = null;
+    // 和 keep-alive 缓存处理相关
     vm._inactive = null;
     vm._directInactive = false;
     // 是否已经挂载
@@ -4784,6 +4824,13 @@
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
+  /**
+   * 执行 this.getter，并重新收集依赖
+   * this.getter 是实例化 watcher 时传递的第二个参数，一个函数或者字符串，比如：updateComponent 或者 parsePath 返回的读取 this.xx 属性值的函数
+   * 为什么要重新收集依赖？
+   * 因为触发更新说明有响应式数据被更新了，但是被更新的数据虽然已经经过 observe 观察了，但是却没有进行依赖收集，
+   * 所以，在更新页面时，会重新执行一次 render 函数，执行期间会触发读取操作，这时候进行依赖收集
+   */
   Watcher.prototype.get = function get () {
     pushTarget(this);
     var value;
@@ -4902,6 +4949,15 @@
    * This only gets called for lazy watchers.
    * 专门给 computed watch 使用，只调用一次，实现缓存的原理
    */
+  /**
+   * 懒执行的 watcher 会调用该方法
+   * 比如：computed，在获取 vm.computedProperty 的值时会调用该方法
+   * 然后执行 this.get，即 watcher 的回调函数，得到返回值
+   * this.dirty 被置为 false，作用是页面在本次渲染中只会一次 computed.key 的回调函数，
+   * 这也是大家常说的 computed 和 methods 区别之一是 computed 有缓存的原理所在
+   * 而页面更新后会 this.dirty 会被重新置为 true，这一步是在 this.update 方法中完成的
+   */
+
   Watcher.prototype.evaluate = function evaluate () {
     this.value = this.get();
     this.dirty = false;
@@ -4956,25 +5012,49 @@
     Object.defineProperty(target, key, sharedPropertyDefinition);
   }
 
+  /**
+   * 两件事：
+   *   数据响应式的入口：分别处理 props、methods、data、computed、watch
+   *   优先级：props、methods、data、computed 对象中的属性不能出现重复，优先级和列出顺序一致
+   *         其中 computed 中的 key 不能和 props、data 中的 key 重复，methods 不影响
+   */
   function initState (vm) {
     vm._watchers = [];
     var opts = vm.$options;
-    if (opts.props) { initProps(vm, opts.props); } //  设置 props 为响应式，并代理
-    if (opts.methods) { initMethods(vm, opts.methods); } // 将 methods 方法挂载在vm上
-    // 调用 observe 方法设置 data 为响应式，并且避免和 props、methods 重名
+     // 处理 props 对象，为 props 对象的每个属性设置响应式，并将其代理到 vm 实例上
+    if (opts.props) { initProps(vm, opts.props); }
+    // 处理 methos 对象，校验每个属性的值是否为函数、和 props 属性比对进行判重处理，最后得到 vm[key] = methods[key]
+    if (opts.methods) { initMethods(vm, opts.methods); }
+    /**
+     * 做了三件事
+     *   1、判重处理，data 对象上的属性不能和 props、methods 对象上的属性相同
+     *   2、代理 data 对象上的属性到 vm 实例
+     *   3、为 data 对象的上数据设置响应式 
+     */
     if (opts.data) {
       initData(vm);
     } else {
       observe(vm._data = {}, true /* asRootData */);
     }
+    /**
+     * 三件事：
+     *   1、为 computed[key] 创建 watcher 实例，默认是懒执行
+     *   2、代理 computed[key] 到 vm 实例
+     *   3、判重，computed 中的 key 不能和 data、props 中的属性重复
+     */
     if (opts.computed) { initComputed(vm, opts.computed); } // 初始化 computed 的 get 和 set 方法
-    // 初始化 watch
+    /**
+     * 三件事：
+     *   1、处理 watch 对象
+     *   2、为 每个 watch.key 创建 watcher 实例，key 和 watcher 实例可能是 一对多 的关系
+     *   3、如果设置了 immediate，则立即执行 回调函数
+     */
     if (opts.watch && opts.watch !== nativeWatch) {
       initWatch(vm, opts.watch);
     }
   }
   /**
-   * @description 实现流程：
+   * @description 实现：处理 props 对象，为 props 对象的每个属性设置响应式，并将其代理到 vm 实例上
    * 1、检验props的key, 取得 value 值（不会对接收父组件的嵌套对象做响应式处理，因为父组件在内层已经实现了响应式。不过会对 props 的 default 默认值做嵌套的响应式处理）
    * 2、defineReactive 定义响应式对象
    * 3、将 props 的key代理到 vm
@@ -5203,10 +5283,23 @@
   }
 
   function createComputedGetter (key) {
+    // computed 属性值会缓存的原理也是在这里结合 watcher.dirty、watcher.evalaute、watcher.update 实现的
     return function computedGetter () {
       var watcher = this._computedWatchers && this._computedWatchers[key];
       if (watcher) {
         // dirty是标志是否已经执行过计算结果，如果执行过则不会执行watcher.evaluate重复计算，这也是缓存的原理
+         // 计算 key 对应的值，通过执行 computed.key 的回调函数来得到
+        // watcher.dirty 属性就是大家常说的 computed 计算结果会缓存的原理
+        // <template>
+        //   <div>{{ computedProperty }}</div>
+        //   <div>{{ computedProperty }}</div>
+        // </template>
+        // 像这种情况下，在页面的一次渲染中，两个 dom 中的 computedProperty 只有第一个
+        // 会执行 computed.computedProperty 的回调函数计算实际的值，
+        // 即执行 watcher.evalaute，而第二个就不走计算过程了，
+        // 因为上一次执行 watcher.evalute 时把 watcher.dirty 置为了 false，
+        // 待页面更新后，wathcer.update 方法会将 watcher.dirty 重新置为 true，
+        // 供下次页面更新时重新计算 computed.key 的结果
         if (watcher.dirty) {
           watcher.evaluate();
         }
@@ -5267,6 +5360,28 @@
     }
   }
 
+  /**
+   * 处理 watch 对象的入口，做了两件事：
+   *   1、遍历 watch 对象
+   *   2、调用 createWatcher 函数
+   * @param {*} watch = {
+   *   'key1': function(val, oldVal) {},
+   *   'key2': 'this.methodName',
+   *   'key3': {
+   *     handler: function(val, oldVal) {},
+   *     deep: true
+   *   },
+   *   'key4': [
+   *     'this.methodNanme',
+   *     function handler1() {},
+   *     {
+   *       handler: function() {},
+   *       immediate: true
+   *     }
+   *   ],
+   *   'key.key5' { ... }
+   * }
+   */
   /**
    * @description 遍历 watch，判断是否是数组，为每一个watch创建createWatcher
    * @author jeffery
@@ -5347,6 +5462,18 @@
      * @param {*} cb
      * @param {*} options
      */
+    /**
+   * 创建 watcher，返回 unwatch，共完成如下 5 件事：
+   *   1、兼容性处理，保证最后 new Watcher 时的 cb 为函数
+   *   2、标示用户 watcher
+   *   3、创建 watcher 实例
+   *   4、如果设置了 immediate，则立即执行一次 cb
+   *   5、返回 unwatch
+   * @param {*} expOrFn key
+   * @param {*} cb 回调函数
+   * @param {*} options 配置项，用户直接调用 this.$watch 时可能会传递一个 配置项
+   * @returns 返回 unwatch 函数，用于取消 watch 监听
+   */
     Vue.prototype.$watch = function (
       expOrFn,
       cb,
@@ -5377,9 +5504,16 @@
 
   var uid$2 = 0;
 
+  /**
+   * 定义 Vue.prototype._init 方法 
+   * @param {*} Vue Vue 构造函数
+   */
   function  initMixin (Vue) {
+
+    // 负责 Vue 的初始化过程
     Vue.prototype._init = function (options) {
       var vm = this;
+      // 每个 vue 实例都有一个 _uid，并且是依次递增的
       // a uid
       vm._uid = uid$2++;
 
@@ -5394,14 +5528,23 @@
 
       // 根实例，也是响应式判断处理的一个标识 a flag to avoid this being observed
       vm._isVue = true;
-      // 子组件选项合并 merge options，初始化 $options
+      // 处理组件配置项，子组件选项合并 merge options，初始化 $options
       if (options && options._isComponent) {
         // optimize internal component instantiation
         // since dynamic options merging is pretty slow, and none of the
         // internal component options needs special treatment.
+        /**
+         * 每个子组件初始化时走这里，这里只做了一些性能优化
+         * 将组件配置对象上的一些深层次属性放到 vm.$options 选项中，以提高代码的执行效率
+         */
         initInternalComponent(vm, options);
       } else {
-        // 选项合并，将合并后的选项赋值给实例的$options属性
+         /**
+         * 初始化根组件时走这里，合并 Vue 的全局配置到根组件的局部配置，比如 Vue.component 注册的全局组件会合并到 根实例的 components 选项中
+         * 至于每个子组件的选项合并则发生在两个地方：
+         *   1、Vue.component 方法注册的全局组件在注册时做了选项合并
+         *   2、{ components: { xx } } 方式注册的局部组件在执行编译器生成的 render 函数时做了选项合并，包括根组件中的 components 配置
+         */
         vm.$options = mergeOptions(
           resolveConstructorOptions(vm.constructor), // 返回 Vue 构造函数自身的配置项
           options || {},
@@ -5409,26 +5552,30 @@
         );
       }
       /* istanbul ignore else */
-      // 如果支持 proxy, 代理到 _renderProxy。使用场景：在 render 函数会用到，会进行数据的检测，如果数据没有定义在 vm 上，会报错提示
+      //  设置代理，将 vm 实例上的属性代理到 vm._renderProxy。使用场景：在 render 函数会用到，会进行数据的检测，如果数据没有定义在 vm 上，会报错提示
       {
         initProxy(vm);
       }
       // expose real self
       vm._self = vm;
-      // 建立父子组件和根组件联系。初始化 $parent, $root, $children, $refs
+      // 初始化组件实例关系属性，建立父子组件和根组件联系。初始化 $parent, $root, $children, $refs
       initLifecycle(vm);
-      // 处理父组件自定义事件 @xxx，将它注册在子组件 $on 上
+      /**
+       * 处理父组件自定义事件 @xxx，将它注册在子组件 $on 上
+       * 初始化自定义事件，这里需要注意一点，我们在 <comp @click="handleClick" /> 上注册的事件，监听者不是父组件，
+       * 而是子组件本身，也就是说事件的派发和监听者都是子组件本身，和父组件无关
+       */
       initEvents(vm);
+      //  解析组件的插槽信息，得到 vm.$slot，处理渲染函数，得到 vm.$createElement 方法，即 h 函数
       // 初始化 $slots, $scopedSlots, _c, $createElement, $attrs,  $listeners
       initRender(vm);
       // 执行 beforeCreate 生命周期钩子函数
       callHook(vm, 'beforeCreate');
-      // 在data/props之前，初始化 inject，并设置其值为响应式
-      // provide 如果传递的是响应式值，那么 inject 值也是响应式，inject 会对它的外层做响应式处理
+      // 初始化组件的 inject 配置项，得到 result[key] = val 形式的配置对象，然后对结果数据进行响应式处理，并代理每个 key 到 vm 实例
       initInjections(vm); // resolve injections before data/props
       // 构建响应式系统, 初始化 props, methods, data, computed, watch
       initState(vm);
-      // 初始化 _provided
+      // 解析组件配置项上的 provide 对象，将其挂载到 vm._provided 属性上
       initProvide(vm); // resolve provide after data/props
       // 执行 created 生命周期钩子函数
       callHook(vm, 'created');
@@ -5439,7 +5586,7 @@
         mark(endTag);
         measure(("vue " + (vm._name) + " init"), startTag, endTag);
       }
-      // 有 el, 执行 $mount 方法
+      // 如果发现配置项上有 el 选项，则自动调用 $mount 方法，也就是说有了 el 选项，就不需要再手动调用 $mount，反之，没有 el 则必须手动调用 $mount
       if (vm.$options.el) {
         vm.$mount(vm.$options.el);
       }
@@ -5466,19 +5613,27 @@
     }
   }
 
+  /**
+   * 从组件构造函数中解析配置对象 options，并合并基类选项
+   * @param {*} Ctor 
+   * @returns 
+   */
   function resolveConstructorOptions (Ctor) {
     var options = Ctor.options;
     if (Ctor.super) { // super 属性在 Vue.extend 会赋值
+      // 存在基类，递归解析基类构造函数的选项
       var superOptions = resolveConstructorOptions(Ctor.super);
       var cachedSuperOptions = Ctor.superOptions;
       // 处理 superOptions 混入新的数据的时候
       if (superOptions !== cachedSuperOptions) {
         // super option changed,
         // need to resolve new options.
+        // 说明基类构造函数选项已经发生改变，需要重新设置
         Ctor.superOptions = superOptions;
-        // check if there are any late-modified/attached options (#4976)
+        // 检查 Ctor.options 上是否有任何后期修改/附加的选项，check if there are any late-modified/attached options (#4976)
         var modifiedOptions = resolveModifiedOptions(Ctor);
         // update base extend options
+        // 如果存在被修改或增加的选项，则合并两个选项
         if (modifiedOptions) {
           extend(Ctor.extendOptions, modifiedOptions);
         }
@@ -5491,10 +5646,15 @@
     return options
   }
 
+  /**
+   * 解析构造函数选项中后续被修改或者增加的选项
+   */
   function resolveModifiedOptions (Ctor) {
     var modified;
     var latest = Ctor.options;
+    // 密封的构造函数选项，备份
     var sealed = Ctor.sealedOptions; // 当前 options 和 superOptions 合并后都值
+    // 对比两个选项，记录不一致的选项
     for (var key in latest) {
       if (latest[key] !== sealed[key]) {
         if (!modified) { modified = {}; }
@@ -5516,12 +5676,13 @@
     ) {
       warn('Vue is a constructor and should be called with the `new` keyword');
     }
+    // 调用 Vue.prototype._init 方法，该方法是在 initMixin 中定义的
     this._init(options);
   }
 
   // 往 Vue 原型上添加属性和方法
   initMixin(Vue); // 原型上添加 _init 方法
-  stateMixin(Vue); // 原型上添加 VUE 实例属性 $data, $props, $set, $delete, $watch
+  stateMixin(Vue); // 原型上添加 VUE 实例属性方法 $data, $props, $set, $delete, $watch
   eventsMixin(Vue); // 原型上添加 $on, $once, $off, $emit 方法
   lifecycleMixin(Vue); // 原型上添加 _update, $forceUpdate, $destroy 方法
   renderMixin(Vue); // 安装运行时辅助工具，原型上添加 $nextTick, _render 方法
@@ -9832,6 +9993,7 @@
     var last, lastTag;
     while (html) {
       last = html;
+        // 确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)
       // Make sure we're not in a plaintext content element like script/style
       if (!lastTag || !isPlainTextElement(lastTag)) {
         var textEnd = html.indexOf('<');
@@ -9843,8 +10005,10 @@
 
             if (commentEnd >= 0) {
               if (options.shouldKeepComment) {
+                // 若保留注释，则把注释截取出来传给options.comment，创建注释类型的AST节点
                 options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3);
               }
+              // 若不保留注释，则将游标移动到'-->'之后，继续向后解析
               advance(commentEnd + 3);
               continue
             }
@@ -10276,7 +10440,8 @@
       shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
       shouldKeepComment: options.comments,
       outputSourceRange: options.outputSourceRange,
-      start: function start (tag, attrs, unary, start$1, end) { // 解析开始标签，如：<div id="app">
+      // 解析开始标签，如：<div id="app">
+      start: function start (tag, attrs, unary, start$1, end) { 
         // check namespace.
         // inherit parent ns if there is one
         var ns = (currentParent && currentParent.ns) || platformGetTagNamespace(tag);

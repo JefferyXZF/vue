@@ -412,8 +412,10 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
 }
 
 /**
- * 选项合并原则：子配置存在则取子配置，不存在则取父配置
+ * 合并两个选项，出现相同配置项时，子选项会覆盖父选项的配置
  * 1、首先 对 components, prop, inject, directive 的检验
+ * 2、递归处理 extends, mixin
+ * 3、按合并策略将两个选型合并
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
  */
@@ -439,6 +441,8 @@ export function mergeOptions (
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+   // 处理原始 child 对象上的 extends 和 mixins，分别执行 mergeOptions，将这些继承而来的选项合并到 parent
+  // mergeOptions 处理过的对象会含有 _base 属性
   if (!child._base) {
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
@@ -455,11 +459,13 @@ export function mergeOptions (
   for (key in parent) {
     mergeField(key)
   }
+  // 遍历 子选项，如果父选项不存在该配置，则合并，否则跳过，因为父子拥有同一个属性的情况在上面处理父选项时已经处理过了，用的子选项的值
   for (key in child) {
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
+  // 合并选项，childVal 优先级高于 parentVal
   function mergeField (key) {
     // 拿到各个选择指定的选项配置，如果没有则用默认的配置
     // strats下每个key对应的便是每个特殊选项的合并策略

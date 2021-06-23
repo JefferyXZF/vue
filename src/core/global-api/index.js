@@ -19,8 +19,12 @@ import {
 } from '../util/index'
 
 /**
- * @description 初始化Vue构造器的静态属性和方法 config、util、set、delete、observable、nextTick、_base、
- * use、extend、component、filter、directive
+* 初始化 Vue 的众多全局 API，比如：
+ *   默认配置：Vue.config
+ *   工具方法：Vue.util.xx
+ *   Vue.set、Vue.delete、Vue.nextTick、Vue.observable
+ *   Vue.options.components、Vue.options.directives、Vue.options.filters、Vue.options._base
+ *   Vue.use、Vue.extend、Vue.mixin、Vue.component、Vue.directive、Vue.filter
  * @author jeffery
  * @date 2021-01-09
  * @export
@@ -47,8 +51,11 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   // them unless you are aware of the risk.
   // 工具方法
   Vue.util = {
+    // 警告日志
     warn,
     extend,
+    // 合并选项
+
     mergeOptions,
     defineReactive
   }
@@ -72,7 +79,7 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   // components with in Weex's multi-instance scenarios.
   Vue.options._base = Vue
 
-    //  注册 keep-alive 全局组件
+    // 在 Vue.options.components 中添加内置组件，比如 keep-alive
   extend(Vue.options.components, builtInComponents)
 
   initUse(Vue) // 挂载 use 静态方法

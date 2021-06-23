@@ -10,6 +10,11 @@ let uid = 0
  * A dep is an observable that can have multiple
  * directives subscribing to it.
  */
+/**
+ * 一个 dep 对应一个 obj.key
+ * 在读取响应式数据时，负责收集依赖，每个 dep（或者说 obj.key）依赖的 watcher 有哪些
+ * 在响应式数据更新时，负责通知 dep 中那些 watcher 去执行 update 方法
+ */
 export default class Dep {
   static target: ?Watcher;
   id: number;
@@ -53,6 +58,12 @@ export default class Dep {
 // The current target watcher being evaluated.
 // This is globally unique because only one watcher
 // can be evaluated at a time.
+/**
+ * 当前正在执行的 watcher，同一时间只会有一个 watcher 在执行
+ * Dep.target = 当前正在执行的 watcher
+ * 通过调用 pushTarget 方法完成赋值，调用 popTarget 方法完成重置（null)
+ */
+
 Dep.target = null
 const targetStack = []
 
