@@ -88,6 +88,8 @@ export function renderMixin (Vue: Class<Component>) {
 
     // set parent vnode. this allows render functions to have access
     // to the data on the placeholder node.
+
+    // 设置父 vnode。这使得渲染函数可以访问占位符节点上的数据。
     vm.$vnode = _parentVnode
     // render self
     let vnode
@@ -100,6 +102,8 @@ export function renderMixin (Vue: Class<Component>) {
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
+      // 到这儿，说明执行 render 函数时出错了
+      // 开发环境渲染错误信息，生产环境返回之前的 vnode，以防止渲染错误导致组件空白
       // return error render result,
       // or previous vnode to prevent render error causing blank component
       /* istanbul ignore else */

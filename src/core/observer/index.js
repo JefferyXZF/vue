@@ -247,7 +247,8 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     return val
   }
   const ob = (target: any).__ob__
-  // 数据是组件实例，直接返回
+  // 不能向 Vue 实例或者 $data 添加动态添加响应式属性，vmCount 的用处之一，
+  // this.$data 的 ob.vmCount = 1，表示根组件，其它子组件的 vm.vmCount 都是 0
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
       'Avoid adding reactive properties to a Vue instance or its root $data ' +
