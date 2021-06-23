@@ -99,11 +99,19 @@ export default class Watcher {
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
+  /**
+   * 执行 this.getter，并重新收集依赖
+   * this.getter 是实例化 watcher 时传递的第二个参数，一个函数或者字符串，比如：updateComponent 或者 parsePath 返回的函数
+   * 为什么要重新收集依赖？
+   *   因为触发更新说明有响应式数据被更新了，但是被更新的数据虽然已经经过 observe 观察了，但是却没有进行依赖收集，
+   *   所以，在更新页面时，会重新执行一次 render 函数，执行期间会触发读取操作，这时候进行依赖收集
+   */
   get () {
     pushTarget(this)
     let value
     const vm = this.vm
     try {
+       // 执行回调函数，比如 updateComponent，进入 patch 阶段
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -173,11 +181,17 @@ export default class Watcher {
   update () {
     /* istanbul ignore else */
     if (this.lazy) { // computed watch
+       // 懒执行时走这里，比如 computed
+      // 将 dirty 置为 true，可以让 computedGetter 执行时重新计算 computed 回调函数的执行结果
       this.dirty = true
-    } else if (this.sync) { // 同步更新
+    } else if (this.sync) {
+      // 同步执行，在使用 vm.$watch 或者 watch 选项时可以传一个 sync 选项，
+      // 当为 true 时在数据更新时该 watcher 就不走异步更新队列，直接执行 this.run 方法进行更新
+      // 这个属性在官方文档中没有出现
       this.run()
     } else {
-      queueWatcher(this) // 异步队列更新
+      // 异步队列更新
+      queueWatcher(this) 
     }
   }
 
@@ -185,6 +199,12 @@ export default class Watcher {
    * Scheduler job interface.
    * Will be called by the scheduler.
    */
+  /**
+ * 由 刷新队列函数 flushSchedulerQueue 调用，如果是同步 watch，则由 this.update 直接调用，完成如下几件事：
+ *   1、执行实例化 watcher 传递的第二个参数，updateComponent 或者 获取 this.xx 的一个函数(parsePath 返回的函数)
+ *   2、更新旧值为新值
+ *   3、执行实例化 watcher 时传递的第三个参数，比如用户 watcher 的回调函数
+ */
   run () {
     if (this.active) {
       const value = this.get()
@@ -197,10 +217,12 @@ export default class Watcher {
         this.deep
       ) {
         // set new value
+        // 更新旧值为新值
         const oldValue = this.value
         this.value = value
         if (this.user) {
           try {
+             // 如果是用户 watcher，则执行用户传递的第三个参数 —— 回调函数，参数为 val 和 oldVal
             this.cb.call(this.vm, value, oldValue)
           } catch (e) {
             handleError(e, this.vm, `callback for watcher "${this.expression}"`)

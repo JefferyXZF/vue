@@ -14,11 +14,26 @@
 
   <script src="../../dist/vue.js"></script>
   <script>
-    debugger
+debugger
 
 // 全局注册
 Vue.component('my-test', {
-  template: `<div>全局注册组件</div>`
+  template: `<div>全局注册组件
+    <slot name="header"></slot>
+    <slot></slot>
+    <div @click="handle">change</div>
+    </div>`,
+  props: ['a', 'b'],
+  directives: {
+    console: function () {
+      console.log('指令')
+    }
+  },
+  methods: {
+    handle() {
+      this.$emit('click', '33')
+    }
+  }
 })
 
 // 局部注册
@@ -39,14 +54,28 @@ var myChild = {
 // const value = import('./test.js')
 // console.log(value)
 // Vue.component('my-test', () => import('./test.js'))
+// <my-child></my-child>
 
 var app = new Vue({
   template: `<div>
-    <my-test></my-test>
-    <my-child></my-child>
+    <my-test @click="getUser">
+      <div>默认插槽</div>
+      <div slot="header">具名插槽</div>
+      </my-test>
+    {{msg}}
   </div>`,
   components: {
     myChild
+  },
+  data () {
+    return {
+      msg: 'Hello world'
+    }
+  },
+  methods: {
+    getUser(value) {
+      console.log(value)
+    }
   }
 })
 
